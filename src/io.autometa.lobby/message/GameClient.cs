@@ -24,15 +24,6 @@ namespace io.autometa.lobby.message
         [DataMember]
         public string nickName {get; set;}
 
-        /// Lobby id that the game client is currently in.
-        [DataMember]
-        public string lobbyID {get; set;}
-
-        /// True if this is the host/lobby owner.!--
-        /// Only the lobbyOwner can lock down a lobby.
-        [DataMember]
-        public bool lobbyOwner {get; set;}
-
         /// User unique id
         public string uid
         {
@@ -47,7 +38,6 @@ namespace io.autometa.lobby.message
             return new ValidationCheck()
             .Compose(ValidationCheck.BasicStringCheck(this.ip, "ip"))
             .Compose(this.port >= 100, "port < 100")
-            .Compose(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
             .Compose(this.game != null, "game is null")
             .Compose(this.game.Validate);
         }

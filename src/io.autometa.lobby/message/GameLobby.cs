@@ -12,6 +12,12 @@ namespace io.autometa.lobby.message
         [DataMember]
         public string lobbyID {get; set;}
 
+        [DataMember]
+        public Game game {get; set;}
+
+        [DataMember]
+        public GameClient host {get; set;}
+
         /// List of all clients in a lobby
         [DataMember]
         public List<GameClient> clients {get; set;}
@@ -35,7 +41,8 @@ namespace io.autometa.lobby.message
         {
             return new ValidationCheck()
             .Compose(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
-            .Compose((clients != null) || (clients.Count == 0), "no clients")
+            .Compose(host == null, "no host")
+            .Compose(host.Validate)
             .Compose(creationTime < DateTime.UtcNow.AddDays(1), "creation time is in the future");
         }
     }

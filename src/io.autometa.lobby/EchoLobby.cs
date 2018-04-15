@@ -14,7 +14,7 @@ namespace io.autometa.lobby
             this.message.Add(message);
         }
 
-        ServerResponse<GameLobby> ILobby.CreateLobby(GameLobby newLobby)
+        ServerResponse<GameLobby> ILobby.CreateLobby(CreateGameLobby newLobby)
         {
             var vc = new ValidationCheck();
             vc.result = false;

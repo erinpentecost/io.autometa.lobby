@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -21,9 +22,12 @@ namespace io.autometa.lobby
         /// <param name="context"></param>
         /// <returns></returns>
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
-        public object FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
+        public async Task<object> FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
             ILobby lobby = new EchoLobby(input);
+
+            var connectionString = Environment.GetEnvironmentVariable("ElasticacheConnectionString");
+
 
             return lobby.CreateLobby(null);
         }

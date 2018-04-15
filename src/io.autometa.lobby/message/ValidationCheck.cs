@@ -18,7 +18,7 @@ namespace io.autometa.lobby.message
         public List<object> reason {get;set;}
 
         private static readonly int maxStr = 69;
-        private static char[] alphaNum = ".:[]abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
+        private static char[] alphaNum = ".:[]-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
 
 
         private ValidationCheck(bool result, string reason)

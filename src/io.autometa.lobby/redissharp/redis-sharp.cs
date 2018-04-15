@@ -58,8 +58,6 @@ public class Redis : IDisposable {
 
 	public string Host { get; private set; }
 	public int Port { get; private set; }
-	public int RetryTimeout { get; set; }
-	public int RetryCount { get; set; }
 	public int SendTimeout { get; set; }
 	public string Password { get; set; }
 	
@@ -307,7 +305,7 @@ public class Redis : IDisposable {
 		return true;
 	}
 
-	bool SendCommand (string cmd, params object [] args)
+	public bool SendCommand (string cmd, params object [] args)
 	{
 		if (socket == null)
 			Connect ();

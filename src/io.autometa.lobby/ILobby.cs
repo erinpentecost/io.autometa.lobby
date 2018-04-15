@@ -7,7 +7,7 @@ namespace io.autometa.lobby
     {
         /// The list of clients should have at least one entry when this 
         /// is called, with one of those being the lobby owner.
-        ServerResponse<GameLobby> CreateLobby(GameLobby newLobby);
+        ServerResponse<GameLobby> CreateLobby(CreateGameLobby newLobby);
         ServerResponse<GameLobby> JoinLobby(string lobbyID, GameClient client);
         ServerResponse<GameLobby> LockLobby(string lobbyID, GameClient owner);
 
