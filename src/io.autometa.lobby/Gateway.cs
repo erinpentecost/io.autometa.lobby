@@ -12,7 +12,7 @@ using Amazon.Lambda.Core;
 
 namespace io.autometa.lobby
 {
-    public class Function
+    public class Gateway
     {
         /// <summary>
         /// A simple function that takes a string and does a ToUpper

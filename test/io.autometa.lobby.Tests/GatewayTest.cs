@@ -20,7 +20,7 @@ namespace io.autometa.lobby.Tests
         {
 
             // Invoke the lambda function and confirm the string was upper cased.
-            var function = new Function();
+            var function = new Gateway();
             var context = new TestLambdaContext();
             APIGatewayProxyRequest testRequest = new APIGatewayProxyRequest();
             testRequest.QueryStringParameters = new Dictionary<string, string>();
@@ -28,8 +28,6 @@ namespace io.autometa.lobby.Tests
             testRequest.PathParameters = new Dictionary<string, string>();
             testRequest.PathParameters.Add("yeah", "whatever");
             var funcResponse = function.FunctionHandler(testRequest, context);
-
-            Console.WriteLine(funcResponse.ToString());
         }
     }
 }
