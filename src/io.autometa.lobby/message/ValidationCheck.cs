@@ -75,23 +75,29 @@ namespace io.autometa.lobby.message
             }
         }
 
-        public static ValidationCheck BasicStringCheck(string str)
+        /// Enforces some arbitrary restraints on strings as a sanity check.
+        public static ValidationCheck BasicStringCheck(string strToCheck, string id = null)
         {
-            if (string.IsNullOrWhiteSpace(str))
+            string prefix = string.Empty;
+            if (!string.IsNullOrWhiteSpace(id))
             {
-                return new ValidationCheck(false, "empty");
+                prefix = id + ": ";
             }
-            if (str.Length > maxStr)
+            if (string.IsNullOrWhiteSpace(strToCheck))
             {
-                return new ValidationCheck(false, "too long");
+                return new ValidationCheck(false, prefix+"empty");
+            }
+            if (strToCheck.Length > maxStr)
+            {
+                return new ValidationCheck(false, prefix+"too long");
             }
 
-            if (str.IndexOfAny(alphaNum) != -1)
+            if (strToCheck.IndexOfAny(alphaNum) != -1)
             {
-                return new ValidationCheck(false, "only alphanumeric characters allowed");
+                return new ValidationCheck(false, prefix+"only alphanumeric characters allowed");
             }
 
-            return new ValidationCheck(true, string.Empty);
+            return new ValidationCheck();
         }
 
         public ValidationCheck Validate()

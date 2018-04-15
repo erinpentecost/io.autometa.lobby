@@ -45,9 +45,9 @@ namespace io.autometa.lobby.message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.ip))
+            .Compose(ValidationCheck.BasicStringCheck(this.ip, "ip"))
             .Compose(this.port < 100, "port < 100")
-            .Compose(ValidationCheck.BasicStringCheck(this.lobbyID))
+            .Compose(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
             .Compose(this.game != null, "game is null")
             .Compose(this.game.Validate);
         }

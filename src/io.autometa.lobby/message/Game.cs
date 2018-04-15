@@ -28,7 +28,7 @@ namespace io.autometa.lobby.message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.id));
+            .Compose(ValidationCheck.BasicStringCheck(this.id, "id"));
         }
     }
 }
