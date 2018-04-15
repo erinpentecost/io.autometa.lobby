@@ -1,0 +1,3 @@
+io.autometa.lobby uses source code from third parties. All this code contains a BSD or BSD-compatible license. The following is a list of third party files and information about their copyright.
+
+* https://github.com/migueldeicaza/redis-sharp, Miguel de Icaza, November 2009, new BSD license
