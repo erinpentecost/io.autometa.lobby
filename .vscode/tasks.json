@@ -17,6 +17,18 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "test (linux)",
+            "command": "./.vscode/runTest.sh",
+            "type": "shell",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
             "label": "build test",
             "command": "dotnet build ./test/io.autometa.lobby.Tests",
             "type": "shell",
@@ -27,24 +39,13 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "test",
-            "command": "dotnet xunit ./test/io.autometa.lobby.Tests",
-            "type": "shell",
-            "group": "test",
-            "presentation": {
-                "reveal": "always"
-            },
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "publish",
             "command": "dotnet lambda deploy-function FunctionHandler",
             "type": "shell",
             "group": "build",
             "presentation": {
                 "reveal": "silent"
-            },
-            "problemMatcher": "$msCompile"
+            }
         }
     ]
 }
