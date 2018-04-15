@@ -41,21 +41,16 @@ namespace io.autometa.lobby.message
 
         public ValidationCheck Compose(bool result, string reason)
         {
-            if (this.result)
-            {
-                return new ValidationCheck(result, reason);
-            }
-            else
-            {
-                return this;
-            }
+            return new ValidationCheck(this.result && result, CombineReasons(this.reason, reason));
         }
 
+        /// Won't execute the check if "this" is already failed.
         public ValidationCheck Compose(Func<ValidationCheck> check)
         {
             if (this.result)
             {
-                return check();
+                var v = check.Invoke();
+                return new ValidationCheck(this.result && v.result, CombineReasons(this.reason, v.reason));
             }
             else
             {
@@ -65,14 +60,7 @@ namespace io.autometa.lobby.message
 
         public ValidationCheck Compose(ValidationCheck check)
         {
-            if (this.result)
-            {
-                return check;
-            }
-            else
-            {
-                return this;
-            }
+            return new ValidationCheck(this.result && check.result, CombineReasons(this.reason, check.reason));
         }
 
         /// Enforces some arbitrary restraints on strings as a sanity check.
@@ -94,7 +82,7 @@ namespace io.autometa.lobby.message
 
             if (strToCheck.IndexOfAny(alphaNum) != -1)
             {
-                return new ValidationCheck(false, prefix+"only alphanumeric characters allowed");
+                return new ValidationCheck(false, prefix+"only alphanumeric-ish characters allowed");
             }
 
             return new ValidationCheck();
@@ -103,6 +91,20 @@ namespace io.autometa.lobby.message
         public ValidationCheck Validate()
         {
             return this;
+        }
+
+        private static string CombineReasons(string r1, string r2)
+        {
+            if (string.IsNullOrWhiteSpace(r2)){
+                return r1;
+            }
+            else if (string.IsNullOrWhiteSpace(r1)){
+                return string.Empty;
+            }
+            else
+            {
+                return r1 + ". " + r2;
+            }
         }
     }
 }
