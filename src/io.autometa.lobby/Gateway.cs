@@ -23,9 +23,9 @@ namespace io.autometa.lobby
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public object FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
-            return new {
-                PathParameters = input.PathParameters,
-                QueryStringParameters = input.QueryStringParameters };
+            ILobby lobby = new EchoLobby(input);
+
+            return lobby.CreateLobby(null);
         }
     }
 }

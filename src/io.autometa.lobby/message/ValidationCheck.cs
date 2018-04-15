@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 namespace io.autometa.lobby.message
@@ -14,7 +15,7 @@ namespace io.autometa.lobby.message
         public bool result {get;set;}
 
         [DataMember]
-        public string reason {get;set;}
+        public List<object> reason {get;set;}
 
         private static readonly int maxStr = 69;
         private static char[] alphaNum = ".:[]abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
@@ -23,44 +24,60 @@ namespace io.autometa.lobby.message
         private ValidationCheck(bool result, string reason)
         {
             this.result = result;
-            if (this.result)
+            this.reason = new List<object>();
+            if (!this.result)
             {
-                this.reason = string.Empty;
-            }
-            else
-            {
-                this.reason = reason;
+                this.reason.Add(reason);
             }
         }
 
         public ValidationCheck()
         {
             this.result = true;
-            this.reason = string.Empty;
+            this.reason = new List<object>();
         }
 
         public ValidationCheck Compose(bool result, string reason)
         {
-            return new ValidationCheck(this.result && result, CombineReasons(this.reason, reason));
-        }
-
-        /// Won't execute the check if "this" is already failed.
-        public ValidationCheck Compose(Func<ValidationCheck> check)
-        {
-            if (this.result)
+            if (result)
             {
-                var v = check.Invoke();
-                return new ValidationCheck(this.result && v.result, CombineReasons(this.reason, v.reason));
+                return this;
             }
             else
             {
+                this.result = false;
+                this.reason.Add(reason);
+                return this;
+            }
+        }
+
+        public ValidationCheck Compose(Func<ValidationCheck> check)
+        {
+            var v = check.Invoke();
+            if (v.result)
+            {
+                return this;
+            }
+            else
+            {
+                this.result = false;
+                this.reason.Add(v.reason);
                 return this;
             }
         }
 
         public ValidationCheck Compose(ValidationCheck check)
         {
-            return new ValidationCheck(this.result && check.result, CombineReasons(this.reason, check.reason));
+            if (check.result)
+            {
+                return this;
+            }
+            else
+            {
+                this.result = false;
+                this.reason.Add(check.reason);
+                return this;
+            }
         }
 
         /// Enforces some arbitrary restraints on strings as a sanity check.
@@ -90,21 +107,7 @@ namespace io.autometa.lobby.message
 
         public ValidationCheck Validate()
         {
-            return this;
-        }
-
-        private static string CombineReasons(string r1, string r2)
-        {
-            if (string.IsNullOrWhiteSpace(r2)){
-                return r1;
-            }
-            else if (string.IsNullOrWhiteSpace(r1)){
-                return string.Empty;
-            }
-            else
-            {
-                return r1 + ". " + r2;
-            }
+            return new ValidationCheck();
         }
     }
 }

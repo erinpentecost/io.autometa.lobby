@@ -39,8 +39,8 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "publish",
-            "command": "dotnet lambda deploy-function FunctionHandler",
+            "label": "publish (linux)",
+            "command": "publish.sh",
             "type": "shell",
             "group": "build",
             "presentation": {

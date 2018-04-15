@@ -10,6 +10,7 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.TestUtilities;
 
 using io.autometa.lobby;
+using Newtonsoft.Json;
 
 namespace io.autometa.lobby.Tests
 {
@@ -28,6 +29,7 @@ namespace io.autometa.lobby.Tests
             testRequest.PathParameters = new Dictionary<string, string>();
             testRequest.PathParameters.Add("yeah", "whatever");
             var funcResponse = function.FunctionHandler(testRequest, context);
+            //Console.WriteLine(JsonConvert.SerializeObject(funcResponse, Formatting.Indented));
         }
     }
 }

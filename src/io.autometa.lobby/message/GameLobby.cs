@@ -35,6 +35,7 @@ namespace io.autometa.lobby.message
         {
             return new ValidationCheck()
             .Compose(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
+            .Compose((clients != null) || (clients.Count == 0), "no clients")
             .Compose(creationTime < DateTime.UtcNow.AddDays(1), "creation time is in the future");
         }
     }

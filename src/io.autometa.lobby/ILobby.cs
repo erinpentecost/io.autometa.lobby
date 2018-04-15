@@ -1,7 +1,17 @@
+using System.Collections.Generic;
+using io.autometa.lobby.message;
+
 namespace io.autometa.lobby
 {
     public interface ILobby
     {
-        
+        /// The list of clients should have at least one entry when this 
+        /// is called, with one of those being the lobby owner.
+        ServerResponse<GameLobby> CreateLobby(GameLobby newLobby);
+        ServerResponse<GameLobby> JoinLobby(string lobbyID, GameClient client);
+        ServerResponse<GameLobby> LockLobby(string lobbyID, GameClient owner);
+
+        /// Returns public games and private lobbies in which this client is a member
+        ServerResponse<List<GameLobby>> Search(GameClient client);
     }
 }
