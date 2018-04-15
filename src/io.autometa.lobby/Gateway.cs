@@ -25,7 +25,7 @@ namespace io.autometa.lobby
         {
             return new {
                 PathParameters = input.PathParameters,
-                QueryStringParameters = input.QueryStringParameters};
+                QueryStringParameters = input.QueryStringParameters };
         }
     }
 }
