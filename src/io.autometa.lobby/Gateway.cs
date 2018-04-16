@@ -24,6 +24,15 @@ namespace io.autometa.lobby
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public async Task<object> FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
+            /*
+            event['pathParameters']['param1']
+            event["queryStringParameters"]['queryparam1']
+            event['requestContext']['identity']['userAgent']
+            event['requestContext']['identity']['sourceIP']
+             */
+
+
+
             ILobby lobby = new EchoLobby(input);
 
             var connectionString = Environment.GetEnvironmentVariable("ElasticacheConnectionString");

@@ -17,7 +17,7 @@ namespace io.autometa.lobby.Tests
     public class FunctionTest
     {
         [Fact]
-        public void TestToUpperFunction()
+        public void Test()
         {
 
             // Invoke the lambda function and confirm the string was upper cased.

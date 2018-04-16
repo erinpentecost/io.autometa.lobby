@@ -49,5 +49,10 @@ namespace io.autometa.lobby
 
             return new ServerResponse<SearchResult>(null, vc);
         }
+
+        ServerResponse<GameLobby> ILobby.ReadLobby(string lobbyID, GameClient client)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
