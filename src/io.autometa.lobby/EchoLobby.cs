@@ -38,7 +38,7 @@ namespace io.autometa.lobby
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<SearchResponse> ILobby.Search(GameClient client)
+        ServerResponse<SearchResponse> ILobby.Search(Game client)
         {
             return new ServerResponse<SearchResponse>(null, this.vc);
         }

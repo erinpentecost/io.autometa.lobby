@@ -41,6 +41,7 @@ namespace io.autometa.lobby
                 GameLobby gl = new GameLobby();
                 gl.clients = new List<GameClient>();
                 gl.host = newLobby.owner;
+                gl.host.ip = this.userIp; // override user-supplied ip
                 gl.game = newLobby.owner.game;
                 gl.locked = false;
                 gl.hidden = newLobby.hidden;
@@ -58,6 +59,7 @@ namespace io.autometa.lobby
         ServerResponse<GameLobby> ILobby.Join(LobbyRequest request)
         {
             GameClient client = request.client;
+            client.ip = this.userIp; // override user-supplied ip
 
             var vc = request.Validate();
             if (!vc.result)
@@ -93,6 +95,7 @@ namespace io.autometa.lobby
         ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
         {
             GameClient owner = request.client;
+            owner.ip = this.userIp; // override user-supplied ip
 
             var vc = request.Validate();
             if (!vc.result)
@@ -124,9 +127,10 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<SearchResponse> ILobby.Search(GameClient client)
+        ServerResponse<SearchResponse> ILobby.Search(Game game)
         {
-            var vc = client.Validate();
+            var vc = game.Validate();
+            
             if (!vc.result)
             {
                 return new ServerResponse<SearchResponse>(null, vc);
@@ -138,7 +142,7 @@ namespace io.autometa.lobby
                 // TODO: replace with SCAN
                 SearchResponse sr = new SearchResponse();
                 sr.lobbyID = new List<string>();
-                sr.lobbyID.AddRange(r.GetKeys(client.game.gid+"*[^$]"));
+                sr.lobbyID.AddRange(r.GetKeys(game.gid+"*[^$]"));
 
                 return new ServerResponse<SearchResponse>(sr, null);
             }
@@ -147,6 +151,7 @@ namespace io.autometa.lobby
         ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
         {
             GameClient client = request.client;
+            client.ip = this.userIp; // override user-supplied ip
 
             var vc = request.Validate();
             if (!vc.result)

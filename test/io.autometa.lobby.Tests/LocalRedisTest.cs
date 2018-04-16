@@ -46,7 +46,7 @@ namespace io.autometa.lobby.Tests
             AssertExt.Valid(createResp);
 
             // Find the lobby
-            var searchResp1 = this.r.Search(gcHost);
+            var searchResp1 = this.r.Search(gcHost.game);
             AssertExt.Valid(searchResp1);
             Assert.True(searchResp1.response.lobbyID.Count > 0);
             Assert.True(searchResp1.response.lobbyID
@@ -67,7 +67,7 @@ namespace io.autometa.lobby.Tests
             gcUser.ip = "localhost";
             gcUser.port = 6960;
             
-            var searchResp2 = this.r.Search(gcUser);
+            var searchResp2 = this.r.Search(gcUser.game);
             AssertExt.Valid(searchResp2);
             Assert.True(searchResp2.response.lobbyID.Count > 0);
             Assert.True(searchResp2.response.lobbyID

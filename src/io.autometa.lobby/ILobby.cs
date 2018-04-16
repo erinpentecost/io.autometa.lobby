@@ -6,15 +6,19 @@ namespace io.autometa.lobby
     /// All these methods must have exactly 1 parameter
     public interface ILobby
     {
-        /// The list of clients should have at least one entry when this 
-        /// is called, with one of those being the lobby owner.
+        /// Create a new lobby, with the caller as the host
         ServerResponse<GameLobby> Create(CreateGameLobby newLobby);
+
+        /// Join an existing lobby
         ServerResponse<GameLobby> Join(LobbyRequest request);
+
+        /// Lock (close, shut down) a lobby.
         ServerResponse<GameLobby> Lock(LobbyRequest request);
 
+        /// Get lobby information when all you have it the id
         ServerResponse<GameLobby> Read(LobbyRequest request);
 
-        /// Returns public games and private lobbies in which this client is a member
-        ServerResponse<SearchResponse> Search(GameClient client);
+        /// Returns public games
+        ServerResponse<SearchResponse> Search(Game game);
     }
 }
