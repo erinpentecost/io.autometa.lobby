@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace io.autometa.lobby.message
 {
@@ -18,7 +19,7 @@ namespace io.autometa.lobby.message
         public List<object> reason {get;set;}
 
         private static readonly int maxStr = 69;
-        private static char[] alphaNum = ".:[]-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
+        private static char[] illegal = "\\/\"'{}:;&".ToCharArray();
 
 
         private ValidationCheck(bool result, string reason)
@@ -97,9 +98,9 @@ namespace io.autometa.lobby.message
                 return new ValidationCheck(false, prefix+"too long");
             }
 
-            if (strToCheck.IndexOfAny(alphaNum) != -1)
+            if (strToCheck.IndexOfAny(illegal) != -1)
             {
-                return new ValidationCheck(false, prefix+"only alphanumeric-ish characters allowed");
+                return new ValidationCheck(false, prefix+"illegal characters ("+illegal+")");
             }
 
             return new ValidationCheck();
@@ -108,6 +109,11 @@ namespace io.autometa.lobby.message
         public ValidationCheck Validate()
         {
             return new ValidationCheck();
+        }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
         }
     }
 }

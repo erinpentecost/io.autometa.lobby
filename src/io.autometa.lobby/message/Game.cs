@@ -27,7 +27,7 @@ namespace io.autometa.lobby.message
 
         public string GenerateID()
         {
-            return this.gid + "_" + Guid.NewGuid().ToString("N").Substring(5, 10);
+            return this.gid + "-" + Guid.NewGuid().ToString("N").Substring(5, 10);
         }
 
         public ValidationCheck Validate()
