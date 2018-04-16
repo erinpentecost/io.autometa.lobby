@@ -40,12 +40,13 @@ namespace io.autometa.lobby
 
                 var ivc = new ValidationCheck()
                     .Compose(string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
-                    .Compose(input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
+                    .Compose(input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
                     .Compose(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
                     .Compose(input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
-                    .Compose(input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
+                    .Compose(input.PathParameters != null, "path parameters are null")
+                    .Compose(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
                     .Compose(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
-                    .Compose(() => string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
+                    .Compose(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
                 if (!ivc.result)
                 {
                     return ivc;
@@ -91,7 +92,7 @@ namespace io.autometa.lobby
                 return vc;
             }
 
-            var expectedParamType = method.GetParameters()[0].GetType();
+            var expectedParamType = method.GetParameters()[0].ParameterType;
             var castedBody = JsonConvert.DeserializeObject(body, expectedParamType);
 
             return method.Invoke(lobby, new object[]{castedBody});

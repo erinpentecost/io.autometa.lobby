@@ -28,6 +28,14 @@ namespace io.autometa.lobby.Tests
             testRequest.QueryStringParameters.Add("echo", "true");
             testRequest.PathParameters = new Dictionary<string, string>();
             testRequest.PathParameters.Add(Gateway.lobbyMethodKey, "Search");
+            testRequest.HttpMethod = "POST";
+            testRequest.Headers = new Dictionary<string,string>();
+            testRequest.Headers["Content-Type"] = @"application/json";
+
+
+            testRequest.RequestContext = testRequest.RequestContext ?? new APIGatewayProxyRequest.ProxyRequestContext();
+            testRequest.RequestContext.Identity = testRequest.RequestContext.Identity ?? new APIGatewayProxyRequest.RequestIdentity();
+            testRequest.RequestContext.Identity.SourceIp = "localhost";
 
 
             message.GameClient gc  = new message.GameClient();
