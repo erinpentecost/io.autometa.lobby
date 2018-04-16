@@ -13,17 +13,21 @@ namespace io.autometa.lobby
 
         private string host {get; set;}
         private int port {get;set;}
-        public RedisLobby(string connectionAddress)
+
+        private string userIp {get;}
+
+        public RedisLobby(string connectionAddress, string userIp)
         {
             //https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis
             //lobby.sni07u.0001.usw2.cache.amazonaws.com:6379
             var splitUp = connectionAddress.Split(':', 2);
             this.host = splitUp[0];
             this.port = int.Parse(splitUp[1]);
+            this.userIp = userIp;
         }
 
 
-        ServerResponse<GameLobby> ILobby.CreateLobby(CreateGameLobby newLobby)
+        ServerResponse<GameLobby> ILobby.Create(CreateGameLobby newLobby)
         {
             var vc = newLobby.Validate();
             if (!vc.result)
@@ -51,7 +55,7 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<GameLobby> ILobby.JoinLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Join(LobbyRequest request)
         {
             GameClient client = request.client;
 
@@ -86,7 +90,7 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<GameLobby> ILobby.LockLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
         {
             GameClient owner = request.client;
 
@@ -140,7 +144,7 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<GameLobby> ILobby.ReadLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
         {
             GameClient client = request.client;
 

@@ -18,22 +18,22 @@ namespace io.autometa.lobby
             this.vc.reason = this.message;
         }
 
-        ServerResponse<GameLobby> ILobby.CreateLobby(CreateGameLobby newLobby)
+        ServerResponse<GameLobby> ILobby.Create(CreateGameLobby newLobby)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<GameLobby> ILobby.JoinLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Join(LobbyRequest request)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<GameLobby> ILobby.LockLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<GameLobby> ILobby.ReadLobby(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }

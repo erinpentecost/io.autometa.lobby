@@ -19,7 +19,7 @@ namespace io.autometa.lobby.Tests
 
         public LocalRedisTest()
         {
-            this.r = new RedisLobby("localhost:6379");
+            this.r = new RedisLobby("localhost:6379", "localhost");
             this.testGame = new Game();
             this.testGame.api = 1;
             this.testGame.id = nameof(LocalRedisTest);
@@ -42,7 +42,7 @@ namespace io.autometa.lobby.Tests
             cgl.hidden = false;
 
             // Creat a new lobby
-            var createResp = this.r.CreateLobby(cgl);
+            var createResp = this.r.Create(cgl);
             AssertExt.Valid(createResp);
 
             // Find the lobby
@@ -53,7 +53,7 @@ namespace io.autometa.lobby.Tests
                 .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             
             // Re-read the lobby
-            var readResp1 = this.r.ReadLobby(new LobbyRequest(createResp.response.lobbyID, gcHost));
+            var readResp1 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcHost));
             AssertExt.Valid(readResp1);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
@@ -74,18 +74,18 @@ namespace io.autometa.lobby.Tests
                 .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             
             // Re-read the lobby as a different user
-            var readResp2 = this.r.ReadLobby(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var readResp2 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcUser));
             AssertExt.Valid(readResp2);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
                 JsonConvert.SerializeObject(readResp2.response));
             
             // Join the lobby!
-            var joinResp = this.r.JoinLobby(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var joinResp = this.r.Join(new LobbyRequest(createResp.response.lobbyID, gcUser));
             AssertExt.Valid(joinResp);
 
             // Read it again and verify we are in now
-            var readResp3 = this.r.ReadLobby(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var readResp3 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcUser));
             AssertExt.Valid(readResp2);
             Assert.NotEqual(
                 JsonConvert.SerializeObject(createResp.response),
