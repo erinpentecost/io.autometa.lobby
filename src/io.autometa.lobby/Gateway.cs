@@ -33,6 +33,9 @@ namespace io.autometa.lobby
             event['requestContext']['identity']['userAgent']
             event['requestContext']['identity']['sourceIP']
              */
+             //https://mynkc1sp17.execute-api.us-west-2.amazonaws.com/lobby/lobby
+
+
 
             try
             {
