@@ -95,7 +95,7 @@ namespace io.autometa.lobby.message
             }
             if (strToCheck.Length > maxStr)
             {
-                return new ValidationCheck(false, prefix+"too long");
+                return new ValidationCheck(false, prefix+"too long ("+strToCheck.Length+"/"+maxStr+")");
             }
 
             if (strToCheck.IndexOfAny(illegal) != -1)

@@ -6,7 +6,7 @@ namespace io.autometa.lobby.message
 {
     /// This is an instance of an actual game lobby.
     [DataContract]
-    public class SearchResult : IMessage
+    public class SearchResponse : IMessage
     {
         [DataMember]
         public List<string> lobbyID {get; set;}

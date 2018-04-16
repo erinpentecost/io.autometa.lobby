@@ -51,11 +51,11 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<GameLobby> ILobby.JoinLobby(string lobbyID, GameClient client)
+        ServerResponse<GameLobby> ILobby.JoinLobby(LobbyRequest request)
         {
-            var vc = client.Validate()
-                .Compose(ValidationCheck.BasicStringCheck(lobbyID))
-                .Compose(lobbyID.StartsWith(client.game.gid), "lobby id is incorrect");
+            GameClient client = request.client;
+
+            var vc = request.Validate();
             if (!vc.result)
             {
                 return new ServerResponse<GameLobby>(null, vc);
@@ -64,13 +64,13 @@ namespace io.autometa.lobby
             using (var r = new Redis(this.host, this.port))
             {
                 r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(lobbyID));
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
-                    .Compose(gl.game.gid != client.game.gid, "game api is mismatched")
+                    .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Compose(gl.host.uid != client.uid, "host can't join her own game")
                     .Compose(gl.clients.All(c => c.uid != client.uid), "already joined")
-                    .Compose(gl.lobbyID == lobbyID, "lobby id changed");
+                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
@@ -86,11 +86,11 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<GameLobby> ILobby.LockLobby(string lobbyID, GameClient owner)
+        ServerResponse<GameLobby> ILobby.LockLobby(LobbyRequest request)
         {
-            var vc = owner.Validate()
-                .Compose(ValidationCheck.BasicStringCheck(lobbyID))
-                .Compose(lobbyID.StartsWith(owner.game.gid), "lobby id is incorrect");
+            GameClient owner = request.client;
+
+            var vc = request.Validate();
             if (!vc.result)
             {
                 return new ServerResponse<GameLobby>(null, vc);
@@ -99,12 +99,12 @@ namespace io.autometa.lobby
             using (var r = new Redis(this.host, this.port))
             {
                 r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(lobbyID));
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
-                    .Compose(gl.game.gid != owner.game.gid, "game api is mismatched")
+                    .Compose(gl.game.gid == owner.game.gid, "game api is mismatched")
                     .Compose(gl.host.uid == owner.uid, "not the host")
-                    .Compose(gl.lobbyID == lobbyID, "lobby id changed");
+                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
@@ -120,31 +120,31 @@ namespace io.autometa.lobby
             }
         }
 
-        ServerResponse<SearchResult> ILobby.Search(GameClient client)
+        ServerResponse<SearchResponse> ILobby.Search(GameClient client)
         {
             var vc = client.Validate();
             if (!vc.result)
             {
-                return new ServerResponse<SearchResult>(null, vc);
+                return new ServerResponse<SearchResponse>(null, vc);
             }
 
             using (var r = new Redis(this.host, this.port))
             {
                 r.Db = 0;
                 // TODO: replace with SCAN
-                SearchResult sr = new SearchResult();
+                SearchResponse sr = new SearchResponse();
                 sr.lobbyID = new List<string>();
                 sr.lobbyID.AddRange(r.GetKeys(client.game.gid+"*[^$]"));
 
-                return new ServerResponse<SearchResult>(sr, null);
+                return new ServerResponse<SearchResponse>(sr, null);
             }
         }
 
-        ServerResponse<GameLobby> ILobby.ReadLobby(string lobbyID, GameClient client)
+        ServerResponse<GameLobby> ILobby.ReadLobby(LobbyRequest request)
         {
-            var vc = client.Validate()
-                .Compose(ValidationCheck.BasicStringCheck(lobbyID))
-                .Compose(lobbyID.StartsWith(client.game.gid), "lobby id is incorrect");
+            GameClient client = request.client;
+
+            var vc = request.Validate();
             if (!vc.result)
             {
                 return new ServerResponse<GameLobby>(null, vc);
@@ -153,10 +153,10 @@ namespace io.autometa.lobby
             using (var r = new Redis(this.host, this.port))
             {
                 r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(lobbyID));
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
                 var blc = new ValidationCheck()
-                    .Compose(gl.game.gid != client.game.gid, "game api is mismatched")
-                    .Compose(gl.lobbyID == lobbyID, "lobby id changed");
+                    .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
+                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
