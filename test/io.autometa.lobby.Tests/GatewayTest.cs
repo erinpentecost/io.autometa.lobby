@@ -25,11 +25,24 @@ namespace io.autometa.lobby.Tests
             var context = new TestLambdaContext();
             APIGatewayProxyRequest testRequest = new APIGatewayProxyRequest();
             testRequest.QueryStringParameters = new Dictionary<string, string>();
-            testRequest.QueryStringParameters.Add("whatever", "dude");
+            testRequest.QueryStringParameters.Add("echo", "true");
             testRequest.PathParameters = new Dictionary<string, string>();
-            testRequest.PathParameters.Add("yeah", "whatever");
+            testRequest.PathParameters.Add(Gateway.lobbyMethodKey, "Search");
+
+
+            message.GameClient gc  = new message.GameClient();
+            gc.nickName = "cool nickname";
+            gc.ip = "localhost";
+            gc.port = 7777;
+            gc.game = new message.Game();
+            gc.game.id = nameof(FunctionTest);
+            gc.game.api = 2;
+            testRequest.Body = Newtonsoft.Json.JsonConvert.SerializeObject(gc);
+
+
             var funcResponse = function.FunctionHandler(testRequest, context);
-            //Console.WriteLine(JsonConvert.SerializeObject(funcResponse, Formatting.Indented));
+            
+            Console.WriteLine(Newtonsoft.Json.JsonConvert.SerializeObject(funcResponse));
         }
     }
 }

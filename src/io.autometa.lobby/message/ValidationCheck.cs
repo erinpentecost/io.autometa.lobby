@@ -52,19 +52,44 @@ namespace io.autometa.lobby.message
             }
         }
 
+        /// Conditionall executed
+        public ValidationCheck Compose(Func<bool> result, string reason)
+        {
+            if (this.result)
+            {
+                bool v = result.Invoke();
+                if (v)
+                {
+                    return this;
+                }
+                else
+                {
+                    this.result = false;
+                    this.reason.Add(reason);
+                    return this;
+                }
+            }
+            return this;
+        }
+
+        /// Conditionally executed
         public ValidationCheck Compose(Func<ValidationCheck> check)
         {
-            var v = check.Invoke();
-            if (v.result)
+            if (this.result)
             {
-                return this;
+                var v = check.Invoke();
+                if (v.result)
+                {
+                    return this;
+                }
+                else
+                {
+                    this.result = false;
+                    this.reason.Add(v.reason);
+                    return this;
+                }
             }
-            else
-            {
-                this.result = false;
-                this.reason.Add(v.reason);
-                return this;
-            }
+            return this;
         }
 
         public ValidationCheck Compose(ValidationCheck check)

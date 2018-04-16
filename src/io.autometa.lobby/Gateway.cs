@@ -17,7 +17,7 @@ namespace io.autometa.lobby
     public class Gateway
     {
         private static int maxBody = 4000;
-        private static string lobbyMethodKey = "lobbyMethod";
+        public static string lobbyMethodKey = "lobbyMethod";
         /// <summary>
         /// A simple function that takes a string and does a ToUpper
         /// </summary>
@@ -36,16 +36,16 @@ namespace io.autometa.lobby
 
             try
             {
-                string sourceIP = input.RequestContext?.Identity?.SourceIp;
+                string sourceIP = input?.RequestContext?.Identity?.SourceIp;
 
                 var ivc = new ValidationCheck()
                     .Compose(string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
                     .Compose(input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
-                    .Compose(string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
+                    .Compose(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
                     .Compose(input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
                     .Compose(input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
-                    .Compose(!string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
-                    .Compose(string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
+                    .Compose(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
+                    .Compose(() => string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
                 if (!ivc.result)
                 {
                     return ivc;
@@ -76,7 +76,8 @@ namespace io.autometa.lobby
                 vc.result = false;
                 // don't leak a stack trace
                 vc.reason.Add(ex.GetType().Name + ": " + ex.Message);
-                return ex;
+                Console.WriteLine(JsonConvert.SerializeObject(ex));
+                return vc;
             }
         }
 
