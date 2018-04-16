@@ -41,13 +41,13 @@ namespace io.autometa.lobby
             return new ServerResponse<GameLobby>(null, vc);
         }
 
-        ServerResponse<List<GameLobby>> ILobby.Search(GameClient client)
+        ServerResponse<SearchResult> ILobby.Search(GameClient client)
         {
             var vc = new ValidationCheck();
             vc.result = false;
             vc.reason = this.message;
 
-            return new ServerResponse<List<GameLobby>>(null, vc);
+            return new ServerResponse<SearchResult>(null, vc);
         }
     }
 }

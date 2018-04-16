@@ -12,6 +12,6 @@ namespace io.autometa.lobby
         ServerResponse<GameLobby> LockLobby(string lobbyID, GameClient owner);
 
         /// Returns public games and private lobbies in which this client is a member
-        ServerResponse<List<GameLobby>> Search(GameClient client);
+        ServerResponse<SearchResult> Search(GameClient client);
     }
 }

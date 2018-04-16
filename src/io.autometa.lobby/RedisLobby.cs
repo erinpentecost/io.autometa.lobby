@@ -51,8 +51,8 @@ namespace io.autometa.lobby
         ServerResponse<GameLobby> ILobby.JoinLobby(string lobbyID, GameClient client)
         {
             var vc = client.Validate()
-            .Compose(ValidationCheck.BasicStringCheck(lobbyID))
-            .Compose(lobbyID.StartsWith(client.game.gid), "lobby id is incorrect");
+                .Compose(ValidationCheck.BasicStringCheck(lobbyID))
+                .Compose(lobbyID.StartsWith(client.game.gid), "lobby id is incorrect");
             if (!vc.result)
             {
                 return new ServerResponse<GameLobby>(null, vc);
@@ -84,12 +84,54 @@ namespace io.autometa.lobby
 
         ServerResponse<GameLobby> ILobby.LockLobby(string lobbyID, GameClient owner)
         {
-            throw new System.NotImplementedException();
+            var vc = owner.Validate()
+                .Compose(ValidationCheck.BasicStringCheck(lobbyID))
+                .Compose(lobbyID.StartsWith(owner.game.gid), "lobby id is incorrect");
+            if (!vc.result)
+            {
+                return new ServerResponse<GameLobby>(null, vc);
+            }
+
+            using (var r = new Redis(this.host, this.port))
+            {
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(lobbyID));
+                var blc = new ValidationCheck()
+                    .Compose(!gl.locked, "game is locked")
+                    .Compose(gl.game.gid != owner.game.gid, "game api is mismatched")
+                    .Compose(gl.host.uid == owner.uid, "not the host")
+                    .Compose(gl.lobbyID == lobbyID, "lobby id changed");
+                if (!blc.result)
+                {
+                    return new ServerResponse<GameLobby>(
+                        null,
+                        blc);
+                }
+
+                gl.locked = true;
+
+                r.Set(gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+
+                return new ServerResponse<GameLobby>(gl, null);
+            }
         }
 
-        ServerResponse<List<GameLobby>> ILobby.Search(GameClient client)
+        ServerResponse<SearchResult> ILobby.Search(GameClient client)
         {
-            throw new System.NotImplementedException();
+            var vc = client.Validate();
+            if (!vc.result)
+            {
+                return new ServerResponse<SearchResult>(null, vc);
+            }
+
+            using (var r = new Redis(this.host, this.port))
+            {
+                // TODO: replace with SCAN
+                SearchResult sr = new SearchResult();
+                sr.lobbyID = new List<string>();
+                sr.lobbyID.AddRange(r.GetKeys(client.game.gid+"*"));
+
+                return new ServerResponse<SearchResult>(sr, null);
+            }
         }
 
         
