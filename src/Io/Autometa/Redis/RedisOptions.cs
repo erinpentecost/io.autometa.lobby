@@ -26,7 +26,7 @@ namespace Io.Autometa.Redis
             set {_sendTimeout = value; }
         }
 
-        public RedisOptions(string host = "localhost", int port = 6379, int SendTimeout = 10000)
+        public RedisOptions(string host = "localhost", int port = 6379, int SendTimeout = 300)
         {
             this.Host = host;
             this.Port = port;

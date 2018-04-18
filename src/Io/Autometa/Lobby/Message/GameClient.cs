@@ -36,10 +36,10 @@ namespace Io.Autometa.Lobby.Message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.ip, "ip"))
-            .Compose(this.port >= 100, "port < 100")
-            .Compose(this.game != null, "game is null")
-            .Compose(this.game.Validate);
+            .Assert(ValidationCheck.BasicStringCheck(this.ip, "ip"))
+            .Assert(this.port >= 100, "port < 100")
+            .Assert(this.game != null, "game is null")
+            .Assert(this.game.Validate);
         }
     }
 }

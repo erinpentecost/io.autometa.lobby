@@ -23,10 +23,10 @@ namespace Io.Autometa.Lobby.Message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.lobbyId, "id"))
-            .Compose(client != null, "client is null")
-            .Compose(lobbyId.StartsWith(client.game.gid), "lobby id is incorrect")
-            .Compose(client.Validate);
+            .Assert(ValidationCheck.BasicStringCheck(this.lobbyId, "id"))
+            .Assert(client != null, "client is null")
+            .Assert(lobbyId.StartsWith(client.game.gid), "lobby id is incorrect")
+            .Assert(client.Validate);
         }
     }
 }

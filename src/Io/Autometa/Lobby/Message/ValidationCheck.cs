@@ -38,7 +38,7 @@ namespace Io.Autometa.Lobby.Message
             this.reason = new List<object>();
         }
 
-        public ValidationCheck Compose(bool result, string reason)
+        public ValidationCheck Assert(bool result, string reason)
         {
             if (result)
             {
@@ -53,7 +53,7 @@ namespace Io.Autometa.Lobby.Message
         }
 
         /// Conditionall executed
-        public ValidationCheck Compose(Func<bool> result, string reason)
+        public ValidationCheck Assert(Func<bool> result, string reason)
         {
             if (this.result)
             {
@@ -73,7 +73,7 @@ namespace Io.Autometa.Lobby.Message
         }
 
         /// Conditionally executed
-        public ValidationCheck Compose(Func<ValidationCheck> check)
+        public ValidationCheck Assert(Func<ValidationCheck> check)
         {
             if (this.result)
             {
@@ -92,7 +92,7 @@ namespace Io.Autometa.Lobby.Message
             return this;
         }
 
-        public ValidationCheck Compose(ValidationCheck check)
+        public ValidationCheck Assert(ValidationCheck check)
         {
             if (check.result)
             {

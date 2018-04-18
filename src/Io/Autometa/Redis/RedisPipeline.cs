@@ -13,21 +13,21 @@ namespace Io.Autometa.Redis
         {
         }
 
-        public dynamic SendCommand(RedisCommand command) => SendCommand(command.ToString());
-        public dynamic SendCommand(string command)
+        public dynamic Send(RedisCommand command) => Send(command.ToString());
+        public dynamic Send(string command)
         {
             commands.Add(Encoding.UTF8.GetBytes(command + RedisClient.endLineString));
             return this;
         }
 
-        public dynamic SendCommand(RedisCommand command, params string[] arguments) => SendCommand(command.ToString(), arguments);
-        public dynamic SendCommand(string command, params string[] arguments)
+        public dynamic Send(RedisCommand command, params string[] arguments) => Send(command.ToString(), arguments);
+        public dynamic Send(string command, params string[] arguments)
         {
-            return SendCommand(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
+            return Send(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
 
-        public dynamic SendCommand(RedisCommand command, params byte[][] arguments) => SendCommand(command.ToString(), arguments);
-        public dynamic SendCommand(string command, byte[][] arguments)
+        public dynamic Send(RedisCommand command, params byte[][] arguments) => Send(command.ToString(), arguments);
+        public dynamic Send(string command, byte[][] arguments)
         {
             var sendCommand = RedisClient.BuildBinarySafeCommand(command, arguments);
 

@@ -42,14 +42,14 @@ namespace Io.Autometa.Lobby
                 string sourceIP = input?.RequestContext?.Identity?.SourceIp;
 
                 var ivc = new ValidationCheck()
-                    .Compose(string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
-                    .Compose(input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
-                    .Compose(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
-                    .Compose(input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
-                    .Compose(input.PathParameters != null, "path parameters are null")
-                    .Compose(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
-                    .Compose(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
-                    .Compose(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
+                    .Assert(string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
+                    .Assert(input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
+                    .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
+                    .Assert(input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
+                    .Assert(input.PathParameters != null, "path parameters are null")
+                    .Assert(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
+                    .Assert(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
+                    .Assert(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
                 if (!ivc.result)
                 {
                     return ivc;
@@ -89,7 +89,7 @@ namespace Io.Autometa.Lobby
         {
             var method = typeof(ILobby).GetMethod(param.Trim());
             var vc = new ValidationCheck()
-                .Compose(method != null, "invalid method ("+param+")");
+                .Assert(method != null, "invalid method ("+param+")");
             if (!vc.result)
             {
                 return vc;

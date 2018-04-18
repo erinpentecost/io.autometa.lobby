@@ -40,10 +40,10 @@ namespace Io.Autometa.Lobby.Message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
-            .Compose(host == null, "no host")
-            .Compose(host.Validate)
-            .Compose(creationTime < DateTime.UtcNow.AddDays(1), "creation time is in the future");
+            .Assert(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
+            .Assert(host == null, "no host")
+            .Assert(host.Validate)
+            .Assert(creationTime < DateTime.UtcNow.AddDays(1), "creation time is in the future");
         }
     }
 }

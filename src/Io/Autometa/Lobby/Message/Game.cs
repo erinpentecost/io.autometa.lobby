@@ -33,7 +33,7 @@ namespace Io.Autometa.Lobby.Message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(ValidationCheck.BasicStringCheck(this.id, "id"));
+            .Assert(ValidationCheck.BasicStringCheck(this.id, "id"));
         }
     }
 }

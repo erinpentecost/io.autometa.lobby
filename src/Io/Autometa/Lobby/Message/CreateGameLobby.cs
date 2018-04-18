@@ -19,8 +19,8 @@ namespace Io.Autometa.Lobby.Message
         public ValidationCheck Validate()
         {
             return new ValidationCheck()
-            .Compose(this.owner != null, "game client null")
-            .Compose(this.owner.Validate);
+            .Assert(this.owner != null, "game client null")
+            .Assert(this.owner.Validate);
         }
     }
 }

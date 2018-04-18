@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,7 @@ namespace Io.Autometa.Redis
             this.log = log;
         }
 
+        /// this makes a bulk array
         internal static byte[] BuildBinarySafeCommand(string command, byte[][] arguments)
         {
             var firstLine = Encoding.UTF8.GetBytes((char)RespType.Arrays + (arguments.Length + 1).ToString() + endLineString);
@@ -34,7 +36,9 @@ namespace Io.Autometa.Redis
             return new[] { firstLine, secondLine }.Concat(thirdLine).SelectMany(xs => xs).ToArray();
         }
 
-        // basically copied from https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs
+        /// basically copied from https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs
+        /// https://redis.io/topics/protocol
+        /// Can return string, resperror, int, bulk string, array
         internal dynamic FetchResponse()
         {
             var type = (RespType)con.stream.ReadByte();
@@ -42,18 +46,16 @@ namespace Io.Autometa.Redis
             {
                 case RespType.SimpleStrings:
                     {
-                        var result = con.stream.ReadFirstLine();
-                        return result;
+                        return con.stream.ReadFirstLine();
                     }
                 case RespType.Errors:
                     {
-                        var result = con.stream.ReadFirstLine();
-                        return result;
+                        return new RespError(con.stream.ReadFirstLine());
                     }
                 case RespType.Integers:
                     {
                         var line = con.stream.ReadFirstLine();
-                        return Decoders.ParseInt64(line);
+                        return Convert.ParseInt64(line);
                     }
                 case RespType.BulkStrings:
                     {
@@ -61,7 +63,7 @@ namespace Io.Autometa.Redis
                         var length = int.Parse(line);
                         if (length == -1)
                         {
-                            return string.Empty;
+                            return null;
                         }
                         var buffer = new byte[length];
                         con.stream.Read(buffer, 0, length);
@@ -98,8 +100,8 @@ namespace Io.Autometa.Redis
             }
         }
 
-        public dynamic SendCommand(RedisCommand command) => SendCommand(command.ToString());
-        public dynamic SendCommand(string command)
+        public dynamic Send(RedisCommand command) => Send(command.ToString());
+        public dynamic Send(string command)
         {
             // Request
             con.stream.WriteLine(command);
@@ -108,14 +110,14 @@ namespace Io.Autometa.Redis
             return FetchResponse();
         }
 
-        public dynamic SendCommand(RedisCommand command, params string[] arguments) => SendCommand(command.ToString(), arguments);
-        public dynamic SendCommand(string command, params string[] arguments)
+        public dynamic Send(RedisCommand command, params string[] arguments) => Send(command.ToString(), arguments);
+        public dynamic Send(string command, params string[] arguments)
         {
-            return SendCommand(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
+            return Send(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
         
-        public dynamic SendCommand(RedisCommand command, params byte[][] arguments) => SendCommand(command.ToString(), arguments);
-        public dynamic SendCommand(string command, byte[][] arguments)
+        public dynamic Send(RedisCommand command, params byte[][] arguments) => Send(command.ToString(), arguments);
+        public dynamic Send(string command, byte[][] arguments)
         {
             var sendCommand = BuildBinarySafeCommand(command, arguments);
 
@@ -126,7 +128,7 @@ namespace Io.Autometa.Redis
             return FetchResponse();
         }
 
-        public dynamic[] SendCommand(RedisPipeline command)
+        public dynamic[] Send(RedisPipeline command)
         {
             var encoded = command.commands.SelectMany(x => x).ToArray();
             // Request
@@ -141,6 +143,29 @@ namespace Io.Autometa.Redis
             }
 
             return result;
+        }
+
+        public IEnumerable<string> Scan(RedisCommand cmd = RedisCommand.SCAN, string match = null)
+        {
+            long cursor = 0;
+            dynamic[] resp;
+            do 
+            {
+                if (match != null)
+                {
+                    resp = this.Send(cmd, cursor.ToString(), "MATCH", match);
+                }
+                else
+                {
+                    resp = this.Send(cmd, cursor.ToString());
+                }
+                cursor = Redis.Convert.ParseInt64(resp[0]);
+                foreach(byte[] b in resp[1])
+                {
+                    yield return Encoding.UTF8.GetString(b);
+                }
+            }
+            while (cursor != 0);
         }
 
         #region IDisposable Support

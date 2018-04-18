@@ -51,13 +51,13 @@ namespace Io.Autometa.Lobby
 
 
                 RedisPipeline p = new RedisPipeline()
-                    .SendCommand(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl))
-                    .SendCommand(RedisCommand.EXPIRE, gl.lobbyID, ExpirationTimeSec);
+                    .Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl))
+                    .Send(RedisCommand.EXPIRE, gl.lobbyID, ExpirationTimeSec);
 
-                var result = r.SendCommand(p) as dynamic[];
+                var result = r.Send(p) as dynamic[];
                 vc = newLobby.Validate()
-                    .Compose(result[0] == "OK", "redis failed to set entry")
-                    .Compose(result[1] == 1, "redis failed to expire entry");
+                    .Assert(result[0] == "OK", "redis failed to set entry")
+                    .Assert(result[1] == 1, "redis failed to expire entry");
                 if (!vc.result)
                 {
                     return new ServerResponse<GameLobby>(null, vc);
@@ -80,15 +80,15 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
+                string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Compose(!gl.locked, "game is locked")
-                    .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
-                    .Compose(gl.host.uid != client.uid, "host can't join her own game")
-                    .Compose(gl.clients.All(c => c.uid != client.uid), "already joined")
-                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed")
-                    .Compose(gl.clients.Count <= maxLobbySize, "lobby is full ("+maxLobbySize+")");
+                    .Assert(!gl.locked, "game is locked")
+                    .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
+                    .Assert(gl.host.uid != client.uid, "host can't join her own game")
+                    .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
+                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed")
+                    .Assert(gl.clients.Count <= maxLobbySize, "lobby is full ("+maxLobbySize+")");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
@@ -98,7 +98,7 @@ namespace Io.Autometa.Lobby
 
                 gl.clients.Add(client);
 
-                r.SendCommand(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -117,13 +117,13 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
+                string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Compose(!gl.locked, "game is locked")
-                    .Compose(gl.game.gid == owner.game.gid, "game api is mismatched")
-                    .Compose(gl.host.uid == owner.uid, "not the host")
-                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
+                    .Assert(!gl.locked, "game is locked")
+                    .Assert(gl.game.gid == owner.game.gid, "game api is mismatched")
+                    .Assert(gl.host.uid == owner.uid, "not the host")
+                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
@@ -133,7 +133,7 @@ namespace Io.Autometa.Lobby
 
                 gl.locked = true;
 
-                r.SendCommand(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -148,17 +148,13 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<SearchResponse>(null, vc);
             }
 
+            SearchResponse sr = new SearchResponse();
             using (var r = new RedisClient(this.opt))
             {
-                // TODO: replace with SCAN
-                SearchResponse sr = new SearchResponse();
-                sr.lobbyID = new List<string>();
-                object[] keysFound = r.SendCommand(RedisCommand.KEYS, game.gid+"*[^$]");
-
-                sr.lobbyID.AddRange(keysFound.Select(b => Encoding.UTF8.GetString(b as byte[])).ToArray());
-
-                return new ServerResponse<SearchResponse>(sr, null);
+                sr.lobbyID = r.Scan(RedisCommand.SCAN, game.gid+"*[^$]").ToList();
             }
+
+            return new ServerResponse<SearchResponse>(sr, null);
         }
 
         ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
@@ -174,11 +170,11 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
+                string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
-                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
+                    .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
+                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(
