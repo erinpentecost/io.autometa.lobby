@@ -7,29 +7,18 @@ namespace Io.Autometa.Redis
     internal class RedisConnection : IDisposable
     {
         private RedisOptions opt {get;}
-        private Socket _sendSocket;
-        private Socket sendSocket
-        {
-            get
-            {
-                if (this._sendSocket == null || !this._sendSocket.Connected)
-                {
-                    this.Connect();
-                }
-                return this._sendSocket;
-            }
-        }
+        private Socket _cSocket;
 
-        private BufferedStream _recvStream;
-        private BufferedStream recvStream
+        private BufferedStream _cStream;
+        public BufferedStream stream
         {
             get
             {
-                if (this._recvStream == null || !this._sendSocket.Connected)
+                if (this._cStream == null || !this._cSocket.Connected)
                 {
                     this.Connect();
                 }
-                return this._recvStream;
+                return this._cStream;
             }
         }
 
@@ -38,29 +27,19 @@ namespace Io.Autometa.Redis
             this.opt = opt;
         }
 
-        public int Send(byte[] message)
-        {
-            return this.sendSocket.Send(message);
-        }
-
-        public byte[] Receive()
-        {
-            throw new NotImplementedException();
-        }
-
         private void Connect()
         {
-            this._sendSocket = new Socket(
+            this._cSocket = new Socket(
                 AddressFamily.InterNetwork,
                 SocketType.Stream,
                 ProtocolType.Tcp);
-            this._sendSocket.NoDelay = true;
-            this._sendSocket.SendTimeout = this.opt.SendTimeout;
-            this._sendSocket.Connect(this.opt.Host, this.opt.Port);
-            if (!this._sendSocket.Connected){
+            this._cSocket.NoDelay = true;
+            this._cSocket.SendTimeout = this.opt.SendTimeout;
+            this._cSocket.Connect(this.opt.Host, this.opt.Port);
+            if (!this._cSocket.Connected){
                 throw new IOException("socket is not connected");
             }
-            this._recvStream = new BufferedStream(new NetworkStream (this._sendSocket), 16*1024);
+            this._cStream = new BufferedStream(new NetworkStream (this._cSocket), 16*1024);
         }
 
         #region IDisposable Support
@@ -73,12 +52,12 @@ namespace Io.Autometa.Redis
                 if (disposing)
                 {
                     // dispose managed state (managed objects).
-                    try { this._sendSocket.Dispose(); } catch { }
-                    try { this._recvStream.Dispose(); } catch { }
+                    try { this._cSocket.Dispose(); } catch { }
+                    try { this._cStream.Dispose(); } catch { }
                 }
 
-                this._sendSocket = null;
-                this._recvStream = null;
+                this._cSocket = null;
+                this._cStream = null;
 
                 disposedValue = true;
             }

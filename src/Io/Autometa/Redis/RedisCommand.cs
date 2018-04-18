@@ -1,6 +1,6 @@
 namespace Io.Autometa.Redis
 {
-    internal enum RedisCommand
+    public enum RedisCommand
     {
         APPEND,
         ASKING,
