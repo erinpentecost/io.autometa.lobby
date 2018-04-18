@@ -1,1 +1,1 @@
-# io.autometa.lobby
+# Io.Autometa.Lobby

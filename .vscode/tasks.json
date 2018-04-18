@@ -5,7 +5,7 @@
     "tasks": [
         {
             "label": "build",
-            "command": "dotnet build ./src/io.autometa.lobby",
+            "command": "dotnet build ./src/Io/Autometa/Lobby/",
             "type": "shell",
             "group": {
                 "kind": "build",
@@ -30,7 +30,7 @@
         },
         {
             "label": "build test",
-            "command": "dotnet build ./test/io.autometa.lobby.Tests",
+            "command": "dotnet build ./test/Io/Autometa/Lobby/",
             "type": "shell",
             "group": "build",
             "presentation": {
