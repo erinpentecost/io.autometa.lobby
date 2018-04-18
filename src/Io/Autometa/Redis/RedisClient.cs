@@ -62,7 +62,7 @@ namespace Io.Autometa.Redis
                         var result = con.stream.ReadFirstLine();
                         return result;
                     }
-                case RespType.Erorrs:
+                case RespType.Errors:
                     {
                         var result = con.stream.ReadFirstLine();
                         return result;

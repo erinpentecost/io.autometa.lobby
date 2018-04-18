@@ -3,7 +3,7 @@ namespace Io.Autometa.Redis
     internal enum RespType : byte
     {
         SimpleStrings = (byte)'+',
-        Erorrs = (byte)'-',
+        Errors = (byte)'-',
         Integers = (byte)':',
         BulkStrings = (byte)'$',
         Arrays = (byte)'*'
