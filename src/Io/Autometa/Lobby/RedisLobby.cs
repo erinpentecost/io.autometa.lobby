@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Io.Autometa.Lobby.Message;
-using Io.Autometa.Lobby.redissharp;
 using Io.Autometa.Redis;
 using Newtonsoft.Json;
 
@@ -51,12 +50,13 @@ namespace Io.Autometa.Lobby
 
 
                 RedisPipeline p = new RedisPipeline()
-                    .SendCommand(RedisCommand.SET, JsonConvert.SerializeObject(gl))
-                    .SendCommand(RedisCommand.EXPIRE, ExpirationTimeSec);
+                    .SendCommand(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl))
+                    .SendCommand(RedisCommand.EXPIRE, gl.lobbyID, ExpirationTimeSec);
 
                 var result = r.SendCommand(p) as dynamic[];
                 vc = newLobby.Validate()
-                    .Compose(result[0], "redis failed to set");
+                    .Compose(result[0] == "OK", "redis failed to set entry")
+                    .Compose(result[1] == 1, "redis failed to expire entry");
                 if (!vc.result)
                 {
                     return new ServerResponse<GameLobby>(null, vc);
@@ -79,7 +79,7 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
@@ -115,7 +115,7 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
@@ -151,8 +151,9 @@ namespace Io.Autometa.Lobby
                 // TODO: replace with SCAN
                 SearchResponse sr = new SearchResponse();
                 sr.lobbyID = new List<string>();
-                string[] keysFound = r.SendCommand(RedisCommand.KEYS, game.gid+"*[^$]");
-                sr.lobbyID.AddRange(keysFound);
+                object[] keysFound = r.SendCommand(RedisCommand.KEYS, game.gid+"*[^$]");
+
+                sr.lobbyID.AddRange(keysFound.Select(b => Encoding.UTF8.GetString(b as byte[])).ToArray());
 
                 return new ServerResponse<SearchResponse>(sr, null);
             }
@@ -171,7 +172,7 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                string lobbyStr = Encoding.UTF8.GetString(r.SendCommand(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
