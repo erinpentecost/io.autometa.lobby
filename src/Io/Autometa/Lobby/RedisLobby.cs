@@ -11,6 +11,7 @@ namespace Io.Autometa.Lobby
     public class RedisLobby : ILobby
     {
         private static string ExpirationTimeSec = 7200.ToString();
+        private int maxLobbySize = 30;
 
         private RedisOptions opt {get; set;}
 
@@ -86,7 +87,8 @@ namespace Io.Autometa.Lobby
                     .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Compose(gl.host.uid != client.uid, "host can't join her own game")
                     .Compose(gl.clients.All(c => c.uid != client.uid), "already joined")
-                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");
+                    .Compose(gl.lobbyID == request.lobbyId, "lobby id changed")
+                    .Compose(gl.clients.Count <= maxLobbySize, "lobby is full ("+maxLobbySize+")");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(

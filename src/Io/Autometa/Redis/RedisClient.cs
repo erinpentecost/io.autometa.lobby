@@ -20,24 +20,6 @@ namespace Io.Autometa.Redis
             this.log = log;
         }
 
-        public bool Send(string cmd, params string[] args)
-        {
-            MemoryStream buff = new MemoryStream();
-            buff.WriteLine("*" + (1 + args.Length).ToString());
-            buff.WriteLine("$" + cmd.Length + "\r\n" + cmd);
-
-            foreach (object arg in args) {
-                string argStr = arg.ToString ();
-                int argStrLength = Encoding.UTF8.GetByteCount(argStr);
-                buff.WriteLine("$" + argStrLength + "\r\n" + argStr);
-            }
-
-            this.log?.LogTrace("Sending "+cmd+" to redis.");
-            buff.CopyTo(con.stream);
-
-            return true;
-        }
-
         internal static byte[] BuildBinarySafeCommand(string command, byte[][] arguments)
         {
             var firstLine = Encoding.UTF8.GetBytes((char)RespType.Arrays + (arguments.Length + 1).ToString() + endLineString);
@@ -52,6 +34,7 @@ namespace Io.Autometa.Redis
             return new[] { firstLine, secondLine }.Concat(thirdLine).SelectMany(xs => xs).ToArray();
         }
 
+        // basically copied from https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs
         internal dynamic FetchResponse()
         {
             var type = (RespType)con.stream.ReadByte();

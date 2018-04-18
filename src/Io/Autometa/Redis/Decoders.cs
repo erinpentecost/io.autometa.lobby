@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Io.Autometa.Redis
 {
-    public static class Decoders
+    internal static class Decoders
     {
         public static int ParseInt32(byte[] s) => ParseInt32(Encoding.UTF8.GetString(s));
         public static int ParseInt32(string s) => int.Parse(s, NumberStyles.Integer, NumberFormatInfo.InvariantInfo);
