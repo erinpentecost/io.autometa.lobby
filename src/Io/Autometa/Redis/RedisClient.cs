@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Io.Autometa.Redis
 {
-    public class RedisClient : IDisposable
+    public class RedisClient : IDisposable, IRedisCommandReceiver
     {
         internal RedisConnection con {get;}
         private ILogger log;
@@ -52,7 +52,7 @@ namespace Io.Autometa.Redis
             return new[] { firstLine, secondLine }.Concat(thirdLine).SelectMany(xs => xs).ToArray();
         }
 
-        internal object FetchResponse(Func<byte[], object> binaryDecoder)
+        internal dynamic FetchResponse()
         {
             var type = (RespType)con.stream.ReadByte();
             switch (type)
@@ -70,7 +70,7 @@ namespace Io.Autometa.Redis
                 case RespType.Integers:
                     {
                         var line = con.stream.ReadFirstLine();
-                        return long.Parse(line);
+                        return Decoders.ParseInt64(line);
                     }
                 case RespType.BulkStrings:
                     {
@@ -78,21 +78,14 @@ namespace Io.Autometa.Redis
                         var length = int.Parse(line);
                         if (length == -1)
                         {
-                            return null;
+                            return string.Empty;
                         }
                         var buffer = new byte[length];
                         con.stream.Read(buffer, 0, length);
 
                         con.stream.ReadFirstLine(); // read terminate
 
-                        if (binaryDecoder == null)
-                        {
-                            return buffer;
-                        }
-                        else
-                        {
-                            return binaryDecoder(buffer);
-                        }
+                        return buffer;
                     }
                 case RespType.Arrays:
                     {
@@ -101,18 +94,18 @@ namespace Io.Autometa.Redis
 
                         if (length == 0)
                         {
-                            return new object[0];
+                            return new dynamic[0];
                         }
                         if (length == -1)
                         {
                             return null;
                         }
 
-                        var objects = new object[length];
+                        var objects = new dynamic[length];
 
                         for (int i = 0; i < length; i++)
                         {
-                            objects[i] = FetchResponse(binaryDecoder);
+                            objects[i] = FetchResponse();
                         }
 
                         return objects;
@@ -122,26 +115,24 @@ namespace Io.Autometa.Redis
             }
         }
 
-        public object SendCommand(string command)
-        {
-            return SendCommand(command, (Func<byte[], object>)null);
-        }
-
-        public object SendCommand(string command, Func<byte[], object> binaryDecoder)
+        public dynamic SendCommand(RedisCommand command) => SendCommand(command.ToString());
+        public dynamic SendCommand(string command)
         {
             // Request
             con.stream.WriteLine(command);
 
             // Response
-            return FetchResponse(binaryDecoder);
+            return FetchResponse();
         }
 
-        public object SendCommand(string command, params byte[][] arguments)
+        public dynamic SendCommand(RedisCommand command, params string[] arguments) => SendCommand(command.ToString(), arguments);
+        public dynamic SendCommand(string command, params string[] arguments)
         {
-            return SendCommand(command, arguments, null);
+            return SendCommand(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
-
-        public object SendCommand(string command, byte[][] arguments, Func<byte[], object> binaryDecoder)
+        
+        public dynamic SendCommand(RedisCommand command, params byte[][] arguments) => SendCommand(command.ToString(), arguments);
+        public dynamic SendCommand(string command, byte[][] arguments)
         {
             var sendCommand = BuildBinarySafeCommand(command, arguments);
 
@@ -149,12 +140,12 @@ namespace Io.Autometa.Redis
             con.stream.Write(sendCommand, 0, sendCommand.Length);
 
             // Response
-            return FetchResponse(binaryDecoder);
+            return FetchResponse();
         }
 
-        public object[] SendCommand(RedisPipeline command)
+        public dynamic[] SendCommand(RedisPipeline command)
         {
-            var encoded = command.commands.SelectMany(x => x.Item1).ToArray();
+            var encoded = command.commands.SelectMany(x => x).ToArray();
             // Request
             this.con.stream.Write(encoded, 0, encoded.Length);
 
@@ -163,7 +154,7 @@ namespace Io.Autometa.Redis
 
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = this.FetchResponse(command.commands[i].Item2);
+                result[i] = this.FetchResponse();
             }
 
             return result;

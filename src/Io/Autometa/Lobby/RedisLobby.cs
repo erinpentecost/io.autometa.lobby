@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Io.Autometa.Lobby.Message;
 using Io.Autometa.Lobby.redissharp;
+using Io.Autometa.Redis;
 using Newtonsoft.Json;
 
 namespace Io.Autometa.Lobby
 {
     public class RedisLobby : ILobby
     {
-        private static int ExpirationTimeSec = 7200;
+        private static string ExpirationTimeSec = 7200.ToString();
 
-        private string host {get; set;}
-        private int port {get;set;}
+        private RedisOptions opt {get; set;}
 
         private string userIp {get;}
 
@@ -21,8 +22,9 @@ namespace Io.Autometa.Lobby
             //https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis
             //lobby.sni07u.0001.usw2.cache.amazonaws.com:6379
             var splitUp = connectionAddress.Split(':', 2);
-            this.host = splitUp[0];
-            this.port = int.Parse(splitUp[1]);
+            this.opt = new RedisOptions();
+            this.opt.Host = splitUp[0];
+            this.opt.Port = int.Parse(splitUp[1]);
             this.userIp = userIp;
         }
 
@@ -35,9 +37,8 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<GameLobby>(null, vc);
             }
 
-            using (var r = new Redis(this.host, this.port))
+            using (var r = new RedisClient(this.opt))
             {
-                r.Db = 0;
                 GameLobby gl = new GameLobby();
                 gl.clients = new List<GameClient>();
                 gl.host = newLobby.owner;
@@ -49,8 +50,17 @@ namespace Io.Autometa.Lobby
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
 
 
-                r.Set(gl.lobbyID, JsonConvert.SerializeObject(gl));
-                r.Expire(gl.lobbyID, ExpirationTimeSec);
+                RedisPipeline p = new RedisPipeline()
+                    .SendCommand(RedisCommand.SET, JsonConvert.SerializeObject(gl))
+                    .SendCommand(RedisCommand.EXPIRE, ExpirationTimeSec);
+
+                var result = r.SendCommand(p) as dynamic[];
+                vc = newLobby.Validate()
+                    .Compose(result[0], "redis failed to set");
+                if (!vc.result)
+                {
+                    return new ServerResponse<GameLobby>(null, vc);
+                }
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -67,10 +77,10 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<GameLobby>(null, vc);
             }
 
-            using (var r = new Redis(this.host, this.port))
+            using (var r = new RedisClient(this.opt))
             {
-                r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
+                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
                     .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
@@ -86,7 +96,7 @@ namespace Io.Autometa.Lobby
 
                 gl.clients.Add(client);
 
-                r.Set(gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.SendCommand(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -103,10 +113,10 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<GameLobby>(null, vc);
             }
 
-            using (var r = new Redis(this.host, this.port))
+            using (var r = new RedisClient(this.opt))
             {
-                r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
+                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(!gl.locked, "game is locked")
                     .Compose(gl.game.gid == owner.game.gid, "game api is mismatched")
@@ -121,7 +131,7 @@ namespace Io.Autometa.Lobby
 
                 gl.locked = true;
 
-                r.Set(gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.SendCommand(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -136,13 +146,13 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<SearchResponse>(null, vc);
             }
 
-            using (var r = new Redis(this.host, this.port))
+            using (var r = new RedisClient(this.opt))
             {
-                r.Db = 0;
                 // TODO: replace with SCAN
                 SearchResponse sr = new SearchResponse();
                 sr.lobbyID = new List<string>();
-                sr.lobbyID.AddRange(r.GetKeys(game.gid+"*[^$]"));
+                string[] keysFound = r.SendCommand(RedisCommand.KEYS, game.gid+"*[^$]");
+                sr.lobbyID.AddRange(keysFound);
 
                 return new ServerResponse<SearchResponse>(sr, null);
             }
@@ -159,10 +169,10 @@ namespace Io.Autometa.Lobby
                 return new ServerResponse<GameLobby>(null, vc);
             }
 
-            using (var r = new Redis(this.host, this.port))
+            using (var r = new RedisClient(this.opt))
             {
-                r.Db = 0;
-                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(r.GetString(request.lobbyId));
+                string lobbyStr = r.SendCommand(RedisCommand.GET, request.lobbyId);
+                GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Compose(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Compose(gl.lobbyID == request.lobbyId, "lobby id changed");

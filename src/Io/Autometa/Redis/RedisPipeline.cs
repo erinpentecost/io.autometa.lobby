@@ -5,36 +5,33 @@ using System.Text;
 
 namespace Io.Autometa.Redis
 {
-    public class RedisPipeline
+    public class RedisPipeline : IRedisCommandReceiver
     {
-        internal readonly List<Tuple<byte[], Func<byte[], object>>> commands = new List<Tuple<byte[], Func<byte[], object>>>();
+        internal readonly List<byte[]> commands = new List<byte[]>();
 
-        private RedisPipeline()
+        public RedisPipeline()
         {
         }
 
-        public RedisPipeline QueueCommand(string command)
+        public dynamic SendCommand(RedisCommand command) => SendCommand(command.ToString());
+        public dynamic SendCommand(string command)
         {
-            commands.Add(Tuple.Create(Encoding.UTF8.GetBytes(command + RedisClient.endLineString), (Func<byte[], object>)null));
+            commands.Add(Encoding.UTF8.GetBytes(command + RedisClient.endLineString));
             return this;
         }
 
-        public RedisPipeline QueueCommand(string command, Func<byte[], object> binaryDecoder)
+        public dynamic SendCommand(RedisCommand command, params string[] arguments) => SendCommand(command.ToString(), arguments);
+        public dynamic SendCommand(string command, params string[] arguments)
         {
-            commands.Add(Tuple.Create(Encoding.UTF8.GetBytes(command + RedisClient.endLineString), binaryDecoder));
-            return this;
+            return SendCommand(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
 
-        public RedisPipeline QueueCommand(string command, params byte[][] arguments)
-        {
-            return QueueCommand(command, arguments, null);
-        }
-
-        public RedisPipeline QueueCommand(string command, byte[][] arguments, Func<byte[], object> binaryDecoder)
+        public dynamic SendCommand(RedisCommand command, params byte[][] arguments) => SendCommand(command.ToString(), arguments);
+        public dynamic SendCommand(string command, byte[][] arguments)
         {
             var sendCommand = RedisClient.BuildBinarySafeCommand(command, arguments);
 
-            commands.Add(Tuple.Create(sendCommand, binaryDecoder));
+            commands.Add(sendCommand);
             return this;
         }
     }
