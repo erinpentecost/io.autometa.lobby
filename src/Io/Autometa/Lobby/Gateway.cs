@@ -35,18 +35,22 @@ namespace Io.Autometa.Lobby
              */
              //https://mynkc1sp17.execute-api.us-west-2.amazonaws.com/lobby/lobby
 
-
+            object mappedResponse = null;
 
             try
             {
                 string sourceIP = input?.RequestContext?.Identity?.SourceIp;
 
+                /// TODO null ref exception in below line
                 var ivc = new ValidationCheck()
-                    .Assert(string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
-                    .Assert(input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
+                    .Assert(input != null, "input is null")
+                    .Assert(context != null, "context is null")
+                    .Assert(() => string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
+                    .Assert(() => input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
                     .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
-                    .Assert(input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
-                    .Assert(input.PathParameters != null, "path parameters are null")
+                    .Assert(() => input.Body != null, "body is null")
+                    .Assert(() => input.Body.Length < maxBody, "body length is too long ("+input.Body.Length+"/"+maxBody.ToString()+")")
+                    .Assert(() => input.PathParameters != null, "path parameters are null")
                     .Assert(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key ("+lobbyMethodKey+")")
                     .Assert(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty ("+lobbyMethodKey+")")
                     .Assert(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
@@ -69,7 +73,7 @@ namespace Io.Autometa.Lobby
                         sourceIP);
                 }
 
-                return MapToLobby(
+                mappedResponse =  MapToLobby(
                     lobby,
                     input.PathParameters[lobbyMethodKey],
                     input.Body);
@@ -81,8 +85,17 @@ namespace Io.Autometa.Lobby
                 // don't leak a stack trace
                 vc.reason.Add(ex.GetType().Name + ": " + ex.Message);
                 Console.WriteLine(JsonConvert.SerializeObject(ex));
-                return vc;
+                mappedResponse =  vc;
             }
+
+            var response = new APIGatewayProxyResponse
+            {
+                StatusCode = (int)HttpStatusCode.OK,
+                Body = Newtonsoft.Json.JsonConvert.SerializeObject(mappedResponse),
+                Headers = new Dictionary<string, string> { { "Content-Type", "application/json" }, { "Access-Control-Allow-Origin", "*" } }
+            };
+
+            return response;
         }
 
         public object MapToLobby(ILobby lobby, string param, string body)
