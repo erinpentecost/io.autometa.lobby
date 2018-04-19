@@ -167,11 +167,8 @@ namespace Io.Autometa.Lobby
             return new ServerResponse<SearchResponse>(sr, null);
         }
 
-        ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Read(ReadRequest request)
         {
-            GameClient client = request.client;
-            client.ip = this.userIp; // override user-supplied ip
-
             var vc = request.Validate();
             if (!vc.result)
             {
@@ -183,8 +180,7 @@ namespace Io.Autometa.Lobby
                 string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
-                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
+                    .Assert(gl.game.gid == request.game.gid, "game api is mismatched");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(

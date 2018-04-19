@@ -64,7 +64,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(searchResp1);
 
             // Re-read the lobby
-            var readResp1 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcHost));
+            var readResp1 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcHost.game));
             AssertExt.Valid(readResp1);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
@@ -85,7 +85,7 @@ namespace Io.Autometa.Lobby.Tests
                 .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             
             // Re-read the lobby as a different user
-            var readResp2 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var readResp2 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));
             AssertExt.Valid(readResp2);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
@@ -99,7 +99,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(joinResp);
 
             // Read it again and verify we are in now
-            var readResp3 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var readResp3 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));
             AssertExt.Valid(readResp2);
             Assert.NotEqual(
                 JsonConvert.SerializeObject(createResp.response),
