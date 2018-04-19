@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "CreateGameLobby",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "owner": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/GameClient"
+        }
+      ]
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "GameClient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "game": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/Game"
+            }
+          ]
+        },
+        "nickName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "Game": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "api": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}

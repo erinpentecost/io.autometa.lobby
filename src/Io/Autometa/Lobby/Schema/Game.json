@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Game",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "api": {
+      "type": "integer",
+      "format": "int32"
+    }
+  }
+}

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Io.Autometa.Lobby.Message;
-
 namespace Io.Autometa.Lobby
 {
     /// All these methods must have exactly 1 parameter

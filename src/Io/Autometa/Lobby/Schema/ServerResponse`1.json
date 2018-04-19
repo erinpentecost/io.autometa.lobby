@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ServerResponseOfSearchResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "response": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/SearchResponse"
+        }
+      ]
+    },
+    "valid": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/ValidationCheck"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "SearchResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lobbyID": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ValidationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "type": "boolean"
+        },
+        "reason": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {}
+        }
+      }
+    }
+  }
+}

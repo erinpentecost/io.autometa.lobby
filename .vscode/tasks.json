@@ -40,11 +40,11 @@
         },
         {
             "label": "publish (linux)",
-            "command": "publish.sh",
+            "command": "./.vscode/publish.sh",
             "type": "shell",
             "group": "build",
             "presentation": {
-                "reveal": "silent"
+                "reveal": "always"
             }
         }
     ]
