@@ -4,6 +4,12 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "typeName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
     "response": {
       "oneOf": [
         {
