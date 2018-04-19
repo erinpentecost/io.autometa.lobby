@@ -11,7 +11,8 @@ namespace Io.Autometa.Lobby
     public class RedisLobby : ILobby
     {
         private static string ExpirationTimeSec = 7200.ToString();
-        private int maxLobbySize = 30;
+        private static int maxLobbySize = 30;
+        private static int maxSearchReturnSize = 100;
 
         private RedisOptions opt {get; set;}
 
@@ -149,9 +150,18 @@ namespace Io.Autometa.Lobby
             }
 
             SearchResponse sr = new SearchResponse();
+            sr.lobbyID = new List<string>();
             using (var r = new RedisClient(this.opt))
             {
-                sr.lobbyID = r.Scan(RedisCommand.SCAN, game.gid+"*[^$]").ToList();
+                foreach (var searchRes in r.Scan(RedisCommand.SCAN, game.gid+"*[^$]"))
+                {
+                    sr.lobbyID.AddRange(searchRes);
+                    if (sr.lobbyID.Count > maxSearchReturnSize)
+                    {
+                        sr.lobbyID.RemoveRange(maxLobbySize, maxLobbySize - sr.lobbyID.Count);
+                        break;
+                    }
+                }
             }
 
             return new ServerResponse<SearchResponse>(sr, null);

@@ -145,7 +145,9 @@ namespace Io.Autometa.Redis
             return result;
         }
 
-        public IEnumerable<string> Scan(RedisCommand cmd = RedisCommand.SCAN, string match = null)
+        /// You will probably want to flatten this output.
+        /// It's just situated like this so the enum can be quit without breaking everything else.
+        public IEnumerable<List<string>> Scan(RedisCommand cmd = RedisCommand.SCAN, string match = null)
         {
             long cursor = 0;
             dynamic[] resp;
@@ -160,10 +162,14 @@ namespace Io.Autometa.Redis
                     resp = this.Send(cmd, cursor.ToString());
                 }
                 cursor = Redis.Convert.ParseInt64(resp[0]);
+                
+                List<string> searchRes = new List<string>();
                 foreach(byte[] b in resp[1])
                 {
-                    yield return Encoding.UTF8.GetString(b);
+                    searchRes.Add(Encoding.UTF8.GetString(b));
                 }
+
+                yield return searchRes;
             }
             while (cursor != 0);
         }
