@@ -9,6 +9,7 @@ using Io.Autometa.Lobby;
 using Io.Autometa.Lobby.Message;
 using Newtonsoft.Json;
 using System.IO;
+using Io.Autometa.Schema;
 
 namespace Io.Autometa.Lobby.Tests
 {
@@ -29,7 +30,7 @@ namespace Io.Autometa.Lobby.Tests
         private static string exeDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
         private static void DumpExample<T>(T example)
         {
-            File.WriteAllText(Path.Combine(exeDir, typeof(T).Name +".sample.json"), JsonConvert.SerializeObject(example));
+            File.WriteAllText(Path.Combine(exeDir, typeof(T).GetFriendlyName() +".sample.json"), JsonConvert.SerializeObject(example));
         }
 
         /// Does happy-path check versus a real redis instance

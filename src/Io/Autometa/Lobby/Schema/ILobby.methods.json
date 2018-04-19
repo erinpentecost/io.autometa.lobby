@@ -1,0 +1,37 @@
+[
+  {
+    "Name": "Create",
+    "Return": "ServerResponse(GameLobby)",
+    "Input": [
+      "CreateGameLobby"
+    ]
+  },
+  {
+    "Name": "Join",
+    "Return": "ServerResponse(GameLobby)",
+    "Input": [
+      "LobbyRequest"
+    ]
+  },
+  {
+    "Name": "Lock",
+    "Return": "ServerResponse(GameLobby)",
+    "Input": [
+      "LobbyRequest"
+    ]
+  },
+  {
+    "Name": "Read",
+    "Return": "ServerResponse(GameLobby)",
+    "Input": [
+      "LobbyRequest"
+    ]
+  },
+  {
+    "Name": "Search",
+    "Return": "ServerResponse(SearchResponse)",
+    "Input": [
+      "Game"
+    ]
+  }
+]

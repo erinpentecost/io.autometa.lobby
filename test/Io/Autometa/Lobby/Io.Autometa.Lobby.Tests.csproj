@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\Io.Autometa.Lobby.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Io\Autometa\Schema\Io.Autometa.Schema.csproj" />
   </ItemGroup>
 
 </Project>

@@ -68,7 +68,7 @@ namespace Io.Autometa.Schema
         private static async Task DumpRootType(Type foundType, string outDir)
         {
             var schema = await JsonSchema4.FromTypeAsync(foundType);
-            await File.WriteAllTextAsync(Path.Combine(outDir, foundType.Name + ".json"), schema.ToJson());
+            await File.WriteAllTextAsync(Path.Combine(outDir, foundType.GetFriendlyName() + ".json"), schema.ToJson());
 
             // now do types used in methods
             List<Type> derivedTypes = new List<Type>();
@@ -94,7 +94,7 @@ namespace Io.Autometa.Schema
             if (methods.Count != 0)
             {
                 await File.WriteAllTextAsync(
-                    Path.Combine(outDir, foundType.Name + ".methods.json"),
+                    Path.Combine(outDir, foundType.GetFriendlyName() + ".methods.json"),
                     Newtonsoft.Json.JsonConvert.SerializeObject(methods, Newtonsoft.Json.Formatting.Indented));
             }
 
@@ -102,7 +102,7 @@ namespace Io.Autometa.Schema
             foreach (var t in derivedTypes)
             {
                 var dSchema = await JsonSchema4.FromTypeAsync(t);
-                await File.WriteAllTextAsync(Path.Combine(outDir, t.Name + ".json"), dSchema.ToJson());
+                await File.WriteAllTextAsync(Path.Combine(outDir, t.GetFriendlyName() + ".json"), dSchema.ToJson());
             }
         }
 
@@ -114,8 +114,8 @@ namespace Io.Autometa.Schema
             public MiniMethodInfo(MethodInfo mi)
             {
                 this.Name = mi.Name;
-                this.Return = mi.ReturnType.Name;
-                this.Input = mi.GetParameters().Select(p => p.ParameterType.Name).ToList();
+                this.Return = mi.ReturnType.GetFriendlyName();
+                this.Input = mi.GetParameters().Select(p => p.ParameterType.GetFriendlyName()).ToList();
             }
         }
     }
