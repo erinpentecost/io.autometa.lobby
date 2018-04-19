@@ -8,6 +8,7 @@ using Xunit;
 using Io.Autometa.Lobby;
 using Io.Autometa.Lobby.Message;
 using Newtonsoft.Json;
+using System.IO;
 
 namespace Io.Autometa.Lobby.Tests
 {
@@ -25,6 +26,11 @@ namespace Io.Autometa.Lobby.Tests
             this.testGame.id = nameof(LocalRedisTest);
         }
 
+        private static string exeDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        private static void DumpExample<T>(T example)
+        {
+            File.WriteAllText(Path.Combine(exeDir, typeof(T).Name +".sample.json"), JsonConvert.SerializeObject(example));
+        }
 
         /// Does happy-path check versus a real redis instance
         /// running on the localhost with default port.
@@ -36,14 +42,17 @@ namespace Io.Autometa.Lobby.Tests
             gcHost.nickName = nameof(gcHost.nickName);
             gcHost.ip = "localhost";
             gcHost.port = 6969;
-            
+            DumpExample(gcHost);
+
             CreateGameLobby cgl = new CreateGameLobby();
             cgl.owner = gcHost;
             cgl.hidden = false;
+            DumpExample(cgl);
 
             // Creat a new lobby
             var createResp = this.r.Create(cgl);
             AssertExt.Valid(createResp);
+            DumpExample(createResp);
 
             // Find the lobby
             var searchResp1 = this.r.Search(gcHost.game);
@@ -51,14 +60,15 @@ namespace Io.Autometa.Lobby.Tests
             Assert.True(searchResp1.response.lobbyID.Count > 0);
             Assert.True(searchResp1.response.lobbyID
                 .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
-            
+            DumpExample(searchResp1);
+
             // Re-read the lobby
             var readResp1 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcHost));
             AssertExt.Valid(readResp1);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
                 JsonConvert.SerializeObject(readResp1.response));
-
+            DumpExample(readResp1);
 
             // Find the lobby as a different user.
             Message.GameClient gcUser = new GameClient();
@@ -81,8 +91,11 @@ namespace Io.Autometa.Lobby.Tests
                 JsonConvert.SerializeObject(readResp2.response));
             
             // Join the lobby!
-            var joinResp = this.r.Join(new LobbyRequest(createResp.response.lobbyID, gcUser));
+            var joinReq = new LobbyRequest(createResp.response.lobbyID, gcUser);
+            DumpExample(joinReq);
+            var joinResp = this.r.Join(joinReq);
             AssertExt.Valid(joinResp);
+            DumpExample(joinResp);
 
             // Read it again and verify we are in now
             var readResp3 = this.r.Read(new LobbyRequest(createResp.response.lobbyID, gcUser));
