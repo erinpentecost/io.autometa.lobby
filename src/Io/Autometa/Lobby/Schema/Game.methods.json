@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "GenerateID",
+    "Return": "String",
+    "Input": []
+  },
+  {
+    "Name": "Validate",
+    "Return": "ValidationCheck",
+    "Input": []
+  }
+]

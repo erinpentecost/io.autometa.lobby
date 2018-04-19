@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "ILobby",
+  "title": "IMessage",
   "type": "object",
   "x-abstract": true,
   "additionalProperties": false

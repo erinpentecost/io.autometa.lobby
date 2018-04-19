@@ -45,32 +45,60 @@ namespace Io.Autometa.Schema
             Assembly asm = Assembly.LoadFile(Path.GetFullPath(Dll));
 
             var foundType = asm.GetTypes()
-                .First(f => string.Equals(f.Name, searchedType, StringComparison.InvariantCultureIgnoreCase));
+                .FirstOrDefault(f => string.Equals(f.Name, searchedType, StringComparison.InvariantCultureIgnoreCase));
 
             if (!Directory.Exists(outDir))
             {
                 Directory.CreateDirectory(outDir);
             }
 
+            if (foundType != default(Type))
+            {
+                await DumpRootType(foundType, outDir);
+            }
+            else if (searchedType.EndsWith('*'))
+            {
+                var st = searchedType.TrimEnd('.', '*');
+                var nameSearch = Task.WhenAll(asm.GetTypes()
+                .Where(t => st.Equals(t.Namespace, StringComparison.InvariantCultureIgnoreCase))
+                .Select(async t => await DumpRootType(t, outDir)).ToArray());
+            }
+        }
+
+        private static async Task DumpRootType(Type foundType, string outDir)
+        {
             var schema = await JsonSchema4.FromTypeAsync(foundType);
             await File.WriteAllTextAsync(Path.Combine(outDir, foundType.Name + ".json"), schema.ToJson());
 
             // now do types used in methods
             List<Type> derivedTypes = new List<Type>();
             List<MiniMethodInfo> methods = new List<MiniMethodInfo>();
-            foreach (var t in foundType.GetMethods())
+            foreach (var t in foundType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
+                .Where(m => !m.IsSpecialName))
             {
-                var paramTypes = t.GetParameters().Select(p => p.ParameterType).ToList();
+                var paramTypes = t.GetParameters()
+                .Select(p => p.ParameterType)
+                .ToList();
+
+                if (t.ContainsGenericParameters)
+                {
+                    paramTypes.AddRange(t.GetGenericArguments().SelectMany(p => p.GetGenericArguments()));
+                }
+                
                 derivedTypes.Add(t.ReturnType);
                 derivedTypes.AddRange(paramTypes);
 
-                methods.Append(new MiniMethodInfo(t));
+                methods.Add(new MiniMethodInfo(t));
             }
-            await File.WriteAllTextAsync(
-                Path.Combine(outDir, foundType.Name + ".methods.json"),
-                 Newtonsoft.Json.JsonConvert.SerializeObject(methods));
 
-            derivedTypes = derivedTypes.Distinct().ToList();
+            if (methods.Count != 0)
+            {
+                await File.WriteAllTextAsync(
+                    Path.Combine(outDir, foundType.Name + ".methods.json"),
+                    Newtonsoft.Json.JsonConvert.SerializeObject(methods, Newtonsoft.Json.Formatting.Indented));
+            }
+
+            derivedTypes = derivedTypes.Distinct().Where(t => !t.Namespace.StartsWith("System")).ToList();
             foreach (var t in derivedTypes)
             {
                 var dSchema = await JsonSchema4.FromTypeAsync(t);
@@ -78,7 +106,7 @@ namespace Io.Autometa.Schema
             }
         }
 
-        private class MiniMethodInfo
+        public class MiniMethodInfo
         {
             public string Name {get;set;}
             public string Return {get;set;}

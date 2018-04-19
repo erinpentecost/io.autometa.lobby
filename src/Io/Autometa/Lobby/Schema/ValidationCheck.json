@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ValidationCheck",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "result": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {}
+    }
+  }
+}

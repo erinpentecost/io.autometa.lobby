@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "title": "ServerResponseOfSearchResponse",
+  "title": "ServerResponse`1",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -10,7 +10,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/definitions/SearchResponse"
+          "$ref": "#/definitions/T"
         }
       ]
     },
@@ -26,20 +26,9 @@
     }
   },
   "definitions": {
-    "SearchResponse": {
+    "T": {
       "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "lobbyID": {
-          "type": [
-            "array",
-            "null"
-          ],
-          "items": {
-            "type": "string"
-          }
-        }
-      }
+      "additionalProperties": false
     },
     "ValidationCheck": {
       "type": "object",

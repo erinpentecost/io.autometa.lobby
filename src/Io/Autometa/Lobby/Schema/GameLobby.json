@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "GameLobby",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "lobbyID": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "game": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/Game"
+        }
+      ]
+    },
+    "host": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/GameClient"
+        }
+      ]
+    },
+    "clients": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/definitions/GameClient"
+      }
+    },
+    "creationTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "locked": {
+      "type": "boolean"
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "Game": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "api": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "GameClient": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ip": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "game": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/Game"
+            }
+          ]
+        },
+        "nickName": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    }
+  }
+}
