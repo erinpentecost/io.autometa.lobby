@@ -33,7 +33,7 @@ namespace Io.Autometa.Lobby
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<GameLobby> ILobby.Read(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Read(ReadRequest request)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }

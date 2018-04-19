@@ -15,7 +15,7 @@ namespace Io.Autometa.Lobby
         ServerResponse<GameLobby> Lock(LobbyRequest request);
 
         /// Get lobby information when all you have it the id
-        ServerResponse<GameLobby> Read(LobbyRequest request);
+        ServerResponse<GameLobby> Read(ReadRequest request);
 
         /// Returns public games
         ServerResponse<SearchResponse> Search(Game game);

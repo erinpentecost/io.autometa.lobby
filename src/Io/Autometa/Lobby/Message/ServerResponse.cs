@@ -8,6 +8,9 @@ namespace Io.Autometa.Lobby.Message
         where T : class, IMessage
     {
         [DataMember]
+        public string typeName {get;}
+
+        [DataMember]
         public T response {get;}
 
         [DataMember]
@@ -27,11 +30,36 @@ namespace Io.Autometa.Lobby.Message
             {
                 this.response = response;
             }
+
+            this.typeName = GetFriendlyName(typeof(T));
         }
 
         public ValidationCheck Validate()
         {
             return new ValidationCheck();
+        }
+
+        private static string GetFriendlyName(Type type)
+        {
+            string friendlyName = type.Name;
+            if (type.IsGenericType)
+            {
+                int iBacktick = friendlyName.IndexOf('`');
+                if (iBacktick > 0)
+                {
+                    friendlyName = friendlyName.Remove(iBacktick);
+                }
+                friendlyName += "(";
+                Type[] typeParameters = type.GetGenericArguments();
+                for (int i = 0; i < typeParameters.Length; ++i)
+                {
+                    string typeParamName = GetFriendlyName(typeParameters[i]);
+                    friendlyName += (i == 0 ? typeParamName : "," + typeParamName);
+                }
+                friendlyName += ")";
+            }
+
+            return friendlyName;
         }
     }
 }

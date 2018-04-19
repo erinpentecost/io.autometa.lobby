@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "ReadRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "lobbyId": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "game": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/Game"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "Game": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": [
+            "null",
+            "string"
+          ]
+        },
+        "api": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    }
+  }
+}
