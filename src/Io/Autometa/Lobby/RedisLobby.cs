@@ -42,6 +42,7 @@ namespace Io.Autometa.Lobby
             {
                 GameLobby gl = new GameLobby();
                 gl.clients = new List<GameClient>();
+                gl.creationTime = DateTime.UtcNow;
                 gl.host = newLobby.owner;
                 gl.host.ip = this.userIp; // override user-supplied ip
                 gl.game = newLobby.owner.game;
