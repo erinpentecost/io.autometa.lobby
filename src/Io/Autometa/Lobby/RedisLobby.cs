@@ -100,7 +100,7 @@ namespace Io.Autometa.Lobby
 
                 gl.clients.Add(client);
 
-                r.Send(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.DEL, gl.lobbyID);
 
                 return new ServerResponse<GameLobby>(gl, null);
             }

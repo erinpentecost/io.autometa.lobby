@@ -15,10 +15,10 @@ namespace Io.Autometa.Redis
         internal const string endLineString = "\r\n";
         internal static byte[] endLineBytes = Encoding.UTF8.GetBytes(endLineString);
 
-        public RedisClient(RedisOptions opt, ILogger log = null)
+        public RedisClient(RedisOptions opt)
         {
             this.con = new RedisConnection(opt);
-            this.log = log;
+            this.log = opt.Log;
         }
 
         /// this makes a bulk array
@@ -103,6 +103,8 @@ namespace Io.Autometa.Redis
         public dynamic Send(RedisCommand command) => Send(command.ToString());
         public dynamic Send(string command)
         {
+            this.log?.LogTrace("Send {0}", command);
+
             // Request
             con.stream.WriteLine(command);
 
@@ -113,6 +115,8 @@ namespace Io.Autometa.Redis
         public dynamic Send(RedisCommand command, params string[] arguments) => Send(command.ToString(), arguments);
         public dynamic Send(string command, params string[] arguments)
         {
+            this.log?.LogTrace("Send {0} {1}", command, string.Join(" ", arguments));
+
             return Send(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
         
@@ -120,6 +124,8 @@ namespace Io.Autometa.Redis
         public dynamic Send(string command, byte[][] arguments)
         {
             var sendCommand = BuildBinarySafeCommand(command, arguments);
+
+            this.log?.LogTrace("Send {0} {1}", command, string.Join(" ", Encoding.UTF8.GetString(sendCommand)));
 
             // Request
             con.stream.Write(sendCommand, 0, sendCommand.Length);
@@ -131,6 +137,9 @@ namespace Io.Autometa.Redis
         public dynamic[] Send(RedisPipeline command)
         {
             var encoded = command.commands.SelectMany(x => x).ToArray();
+
+            this.log?.LogTrace("Send Pipeline {1}", command.ToString());
+
             // Request
             this.con.stream.Write(encoded, 0, encoded.Length);
 
@@ -184,6 +193,7 @@ namespace Io.Autometa.Redis
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects).
+                    this.con.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
