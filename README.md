@@ -1,6 +1,6 @@
 # Io.Autometa.Lobby
 
-https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/lobby/
+https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/Create
 
 ```bash
 curl -H "Content-Type: application/json" -X POST -d '{"owner":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"hidden":false}' https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/Create

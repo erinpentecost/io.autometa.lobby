@@ -9,7 +9,6 @@ using Amazon.Lambda.Core;
 using Io.Autometa.Lobby.Message;
 using Newtonsoft.Json;
 
-// Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
 namespace Io.Autometa.Lobby
@@ -17,7 +16,7 @@ namespace Io.Autometa.Lobby
     public class Gateway
     {
         private static int maxBody = 4000;
-        public static string lobbyMethodKey = "lobbyMethod";
+        public static string lobbyMethodKey = "proxy";
         /// <summary>
         /// A simple function that takes a string and does a ToUpper
         /// </summary>
@@ -45,6 +44,7 @@ namespace Io.Autometa.Lobby
                 var ivc = new ValidationCheck()
                     .Assert(input != null, "input is null")
                     .Assert(context != null, "context is null")
+                    .Assert(() => !string.IsNullOrWhiteSpace(input.HttpMethod), "http method not supplied")
                     .Assert(() => string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
                     .Assert(() => input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
                     .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
@@ -56,22 +56,12 @@ namespace Io.Autometa.Lobby
                     .Assert(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
                 if (!ivc.result)
                 {
-                    return ivc;
+                    return WrapResponse(ivc);
                 }
 
-                ILobby lobby = null;
-
-                if (input.QueryStringParameters.ContainsKey("echo") &&
-                    string.Equals(input.QueryStringParameters["echo"], "true", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    lobby = new EchoLobby(input);
-                }
-                else
-                {
-                    lobby = new RedisLobby(
+                ILobby lobby = new RedisLobby(
                         Environment.GetEnvironmentVariable("ElasticacheConnectionString"),
                         sourceIP);
-                }
 
                 mappedResponse =  MapToLobby(
                     lobby,
@@ -88,14 +78,18 @@ namespace Io.Autometa.Lobby
                 mappedResponse =  vc;
             }
 
-            var response = new APIGatewayProxyResponse
+            return WrapResponse(mappedResponse);
+        }
+
+        private static APIGatewayProxyResponse WrapResponse(
+            object toSerialize)
+        {
+            return new APIGatewayProxyResponse
             {
                 StatusCode = (int)HttpStatusCode.OK,
-                Body = Newtonsoft.Json.JsonConvert.SerializeObject(mappedResponse),
+                Body = Newtonsoft.Json.JsonConvert.SerializeObject(toSerialize),
                 Headers = new Dictionary<string, string> { { "Content-Type", "application/json" }, { "Access-Control-Allow-Origin", "*" } }
             };
-
-            return response;
         }
 
         public object MapToLobby(ILobby lobby, string param, string body)
