@@ -21,9 +21,10 @@ namespace Io.Autometa.Lobby.Tests
 
         public LocalRedisTest()
         {
+            Random r = new Random();
             this.r = new RedisLobby("localhost:6379", "localhost");
             this.testGame = new Game();
-            this.testGame.api = 1;
+            this.testGame.api = r.Next(0,100);
             this.testGame.id = nameof(LocalRedisTest);
         }
 
