@@ -125,7 +125,7 @@ namespace Io.Autometa.Lobby.Message
 
             if (strToCheck.IndexOfAny(illegal) != -1)
             {
-                return new ValidationCheck(false, prefix+"illegal characters ("+illegal+")");
+                return new ValidationCheck(false, prefix+"illegal characters ("+string.Join(" ",illegal)+")");
             }
 
             return new ValidationCheck();
