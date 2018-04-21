@@ -28,7 +28,7 @@ namespace Io.Autometa.Lobby
                 this.GetChar()
             };
 
-            return new string(id);
+            return new string(id).ToUpperInvariant();
         }
     }
 }

@@ -100,6 +100,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(joinResp);
 
             // Read it again and verify we are in now
+            // there is a bug now
             var readResp3 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));
             AssertExt.Valid(readResp2);
             Assert.NotEqual(

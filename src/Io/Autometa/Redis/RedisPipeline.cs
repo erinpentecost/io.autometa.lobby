@@ -34,5 +34,10 @@ namespace Io.Autometa.Redis
             commands.Add(sendCommand);
             return this;
         }
+
+        public override string ToString()
+        {
+            return string.Join("; ", commands.Select(b => Encoding.UTF8.GetString(b)));
+        }
     }
 }

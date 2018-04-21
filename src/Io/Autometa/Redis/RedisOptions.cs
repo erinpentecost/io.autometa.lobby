@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 
 namespace Io.Autometa.Redis
 {
@@ -26,11 +27,20 @@ namespace Io.Autometa.Redis
             set {_sendTimeout = value; }
         }
 
-        public RedisOptions(string host = "localhost", int port = 6379, int SendTimeout = 300)
+        private ILogger _log;
+        public ILogger Log
+        {
+            get { return _log; }
+            set {_log = value; }
+        }
+        
+
+        public RedisOptions(string host = "localhost", int port = 6379, int SendTimeout = 300, ILogger log = null)
         {
             this.Host = host;
             this.Port = port;
             this.SendTimeout = SendTimeout;
+            this.Log = log;
         }
     }
 }

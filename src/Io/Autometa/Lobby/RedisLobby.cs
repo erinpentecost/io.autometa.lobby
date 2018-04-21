@@ -10,7 +10,7 @@ namespace Io.Autometa.Lobby
 {
     public class RedisLobby : ILobby
     {
-        private static string ExpirationTimeSec = 7200.ToString();
+        private static string ExpirationTimeSec = 600.ToString();
         private static int maxLobbySize = 30;
         private static int maxSearchReturnSize = 100;
 
@@ -51,15 +51,8 @@ namespace Io.Autometa.Lobby
                 gl.lobbyID = newLobby.owner.game.GenerateID()
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
 
+                r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
 
-                RedisPipeline p = new RedisPipeline()
-                    .Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl))
-                    .Send(RedisCommand.EXPIRE, gl.lobbyID, ExpirationTimeSec);
-
-                var result = r.Send(p) as dynamic[];
-                vc = newLobby.Validate()
-                    .Assert(result[0] == "OK", "redis failed to set entry")
-                    .Assert(result[1] == 1, "redis failed to expire entry");
                 if (!vc.result)
                 {
                     return new ServerResponse<GameLobby>(null, vc);
@@ -82,7 +75,15 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
+                var foundGame = r.Send(RedisCommand.GET, request.lobbyId);
+                if (foundGame == null)
+                {
+                    return new ServerResponse<GameLobby>(
+                        null,
+                        new ValidationCheck(false, "lobby '"+request.lobbyId+"' does not exist.")
+                    );
+                }
+                string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Assert(!gl.locked, "game is locked")
@@ -100,7 +101,7 @@ namespace Io.Autometa.Lobby
 
                 gl.clients.Add(client);
 
-                r.Send(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -135,7 +136,7 @@ namespace Io.Autometa.Lobby
 
                 gl.locked = true;
 
-                r.Send(RedisCommand.SET, gl.lobbyID, Newtonsoft.Json.JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.DEL, gl.lobbyID);
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -178,7 +179,21 @@ namespace Io.Autometa.Lobby
 
             using (var r = new RedisClient(this.opt))
             {
-                string lobbyStr = Encoding.UTF8.GetString(r.Send(RedisCommand.GET, request.lobbyId));
+                var p = new RedisPipeline()
+                    .Send(RedisCommand.GET, request.lobbyId)
+                    .Send(RedisCommand.EXPIRE, request.lobbyId);
+
+                var foundGame = r.Send(p);
+
+                if (foundGame[0] == null)
+                {
+                    return new ServerResponse<GameLobby>(
+                        null,
+                        new ValidationCheck(false, "lobby '"+request.lobbyId+"' does not exist.")
+                    );
+                }
+
+                string lobbyStr = Encoding.UTF8.GetString(foundGame[0]);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
                     .Assert(gl.game.gid == request.game.gid, "game api is mismatched");
