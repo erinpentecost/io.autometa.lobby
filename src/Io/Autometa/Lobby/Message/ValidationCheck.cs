@@ -22,7 +22,7 @@ namespace Io.Autometa.Lobby.Message
         private static char[] illegal = "\\/\"'{}:;&".ToCharArray();
 
 
-        private ValidationCheck(bool result, string reason)
+        public ValidationCheck(bool result, string reason)
         {
             this.result = result;
             this.reason = new List<object>();

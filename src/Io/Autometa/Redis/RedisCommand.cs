@@ -155,6 +155,7 @@ namespace Io.Autometa.Redis
         SSCAN,
         SYNC,
 
+        TOUCH,
         TIME,
         TTL,
         TYPE,
