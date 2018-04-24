@@ -6,7 +6,7 @@ using System.Linq;
 using Amazon.Lambda.Serialization.Json;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
-using Io.Autometa.Lobby.Message;
+using Io.Autometa.LobbyContract;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 

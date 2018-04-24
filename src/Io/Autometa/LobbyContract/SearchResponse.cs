@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.LobbyContract
 {
     /// This is an instance of an actual game lobby.
     [DataContract]

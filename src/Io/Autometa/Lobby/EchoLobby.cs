@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Io.Autometa.Lobby.Message;
+using Io.Autometa.LobbyContract;
 
 namespace Io.Autometa.Lobby
 {

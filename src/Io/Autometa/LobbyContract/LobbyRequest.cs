@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.LobbyContract
 {
     /// This is a game API definition.
     [DataContract]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.LobbyContract
 {
     /// This provides a method of validating messages without
     /// being super verbose for each message.

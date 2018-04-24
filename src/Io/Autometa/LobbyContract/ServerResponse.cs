@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.LobbyContract
 {
     [DataContract]
     public class ServerResponse<T> : IMessage
