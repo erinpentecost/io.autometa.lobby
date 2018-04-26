@@ -14,6 +14,9 @@ namespace Io.Autometa.Lobby.Contract
         /// Lock (close, shut down) a lobby.
         ServerResponse<GameLobby> Lock(LobbyRequest request);
 
+        /// Leave (or kick someone else, if you are the host)
+        ServerResponse<GameLobby> Leave(LobbyRequest request);
+
         /// Get lobby information when all you have it the id
         ServerResponse<GameLobby> Read(ReadRequest request);
 

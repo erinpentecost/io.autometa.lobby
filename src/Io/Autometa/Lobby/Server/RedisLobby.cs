@@ -23,9 +23,7 @@ namespace Io.Autometa.Lobby
 
         // Ensure that only one instance of keys[2] exists, based on keys[1]
         private static string EnsureSingleLua =
-@"if redis.call(""EXISTS"",KEYS[1]) == ""1"" then
-redis.call(""DEL"",KEYS[2])
-end
+@"redis.call(""DEL"",redis.call(""GET"",KEYS[1]))
 redis.call(""SET"",KEYS[1],KEYS[2])";
 
         public RedisLobby(string connectionAddress, string userIp)
@@ -117,6 +115,14 @@ redis.call(""SET"",KEYS[1],KEYS[2])";
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
+        }
+
+        public ServerResponse<GameLobby> Leave(LobbyRequest request)
+        {
+            // if caller is host, can kick anyone
+            // else, same person can quit
+            //maybe make it so one person can't be in multiple lobbies?
+            throw new NotImplementedException();
         }
 
         ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
