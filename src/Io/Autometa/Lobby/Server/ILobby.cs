@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Io.Autometa.LobbyContract;
+using Io.Autometa.Lobby.Contract;
 namespace Io.Autometa.Lobby
 {
     /// All these methods must have exactly 1 parameter

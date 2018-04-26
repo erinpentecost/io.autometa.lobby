@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Io.Autometa.LobbyContract;
 
-namespace Io.Autometa.LobbyContract
+namespace Io.Autometa.Lobby.Contract
 {
-    internal static class IdGenerator
+    static class IdGenerator
     {
         // Intentionally no IO0
         private static string allowedChars = "QWFPGJLUYARSTDHNEZXCVBKM123456789";

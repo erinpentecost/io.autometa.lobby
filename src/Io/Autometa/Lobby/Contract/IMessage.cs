@@ -1,6 +1,6 @@
 using System;
 
-namespace Io.Autometa.LobbyContract
+namespace Io.Autometa.Lobby.Contract
 {
     /// All messages must implement this interface.
     public interface IMessage

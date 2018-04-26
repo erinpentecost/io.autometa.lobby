@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Io.Autometa.LobbyContract;
+using Io.Autometa.Lobby.Contract;
 using Io.Autometa.Redis;
 using Newtonsoft.Json;
 

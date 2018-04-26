@@ -23,7 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\Io.Autometa.Lobby.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\Server\Io.Autometa.Lobby.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\Contract\Io.Autometa.Lobby.Contract.csproj" />
     <ProjectReference Include="..\..\..\..\src\Io\Autometa\Schema\Io.Autometa.Schema.csproj" />
   </ItemGroup>
 
