@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Xunit;
 
 using Io.Autometa.Lobby;
-using Io.Autometa.Lobby.Message;
+using Io.Autometa.Lobby.Contract;
 using Newtonsoft.Json;
 using System.IO;
 using Io.Autometa.Schema;
@@ -39,7 +39,7 @@ namespace Io.Autometa.Lobby.Tests
         [Fact]
         public void IntegrationTest()
         {
-            Message.GameClient gcHost = new GameClient();
+            GameClient gcHost = new GameClient();
             gcHost.game = this.testGame;
             gcHost.nickName = nameof(gcHost.nickName);
             gcHost.ip = "localhost";
@@ -73,7 +73,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(readResp1);
 
             // Find the lobby as a different user.
-            Message.GameClient gcUser = new GameClient();
+            GameClient gcUser = new GameClient();
             gcUser.game = this.testGame;
             gcUser.nickName = "nonowner";
             gcUser.ip = "localhost";

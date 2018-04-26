@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lobby\Io.Autometa.Lobby.csproj" />
+    <ProjectReference Include="..\Lobby\Contract\Io.Autometa.Lobby.Contract.csproj" />
   </ItemGroup>
 
   <ItemGroup>

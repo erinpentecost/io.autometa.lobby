@@ -10,6 +10,7 @@ using Amazon.Lambda.Core;
 using Amazon.Lambda.TestUtilities;
 
 using Io.Autometa.Lobby;
+using Io.Autometa.Lobby.Contract;
 using Newtonsoft.Json;
 
 namespace Io.Autometa.Lobby.Tests
@@ -38,11 +39,11 @@ namespace Io.Autometa.Lobby.Tests
             testRequest.RequestContext.Identity.SourceIp = "localhost";
 
 
-            Message.GameClient gc  = new Message.GameClient();
+            GameClient gc  = new GameClient();
             gc.nickName = "cool nickname";
             gc.ip = "localhost";
             gc.port = 7777;
-            gc.game = new Message.Game();
+            gc.game = new Game();
             gc.game.id = nameof(FunctionTest);
             gc.game.api = 2;
             testRequest.Body = Newtonsoft.Json.JsonConvert.SerializeObject(gc);

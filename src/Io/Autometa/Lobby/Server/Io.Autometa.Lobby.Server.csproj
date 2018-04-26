@@ -24,7 +24,8 @@
 
 
   <ItemGroup>
-    <ProjectReference Include="..\Redis\Io.Autometa.Redis.csproj" />
+    <ProjectReference Include="..\..\Redis\Io.Autometa.Redis.csproj" />
+    <ProjectReference Include="..\Contract\Io.Autometa.Lobby.Contract.csproj" />
   </ItemGroup>
 
 </Project>

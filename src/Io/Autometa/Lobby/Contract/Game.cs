@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.Lobby.Contract
 {
     /// This is a game API definition.
     [DataContract]
@@ -27,7 +27,7 @@ namespace Io.Autometa.Lobby.Message
 
         public string GenerateID()
         {
-            return this.gid + "-" + (new IdGenerator()).GetId();
+            return this.gid + "-" + IdGenerator.GetId();
         }
 
         public ValidationCheck Validate()

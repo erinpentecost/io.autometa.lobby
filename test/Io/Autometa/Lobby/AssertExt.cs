@@ -7,7 +7,7 @@ using Xunit;
 
 using Io.Autometa.Lobby;
 using Newtonsoft.Json;
-using Io.Autometa.Lobby.Message;
+using Io.Autometa.Lobby.Contract;
 
 namespace Io.Autometa.Lobby.Tests
 {

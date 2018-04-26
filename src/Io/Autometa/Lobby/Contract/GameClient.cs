@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Message
+namespace Io.Autometa.Lobby.Contract
 {
     /// This is an instance of a game that a user is running.
     [DataContract]
