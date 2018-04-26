@@ -18,6 +18,12 @@ namespace Io.Autometa.Lobby
 
         private string userIp {get;}
 
+        private static string EnsureSingleLua =
+@"if redis.call(""EXISTS"",KEYS[1]) == 1 then
+    redis.call(""DEL"",KEYS[2])
+end
+redis.call(""SET"",KEYS[1],KEYS[2])";
+
         public RedisLobby(string connectionAddress, string userIp)
         {
             //https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis
@@ -50,6 +56,8 @@ namespace Io.Autometa.Lobby
                 gl.hidden = newLobby.hidden;
                 gl.lobbyID = newLobby.owner.game.GenerateID()
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
+
+                r.Send(RedisCommand.EVAL, EnsureSingleLua, "2", gl.host.ip, gl.lobbyID);
 
                 r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Io.Autometa.Lobby.Contract;
-namespace Io.Autometa.Lobby
+
+namespace Io.Autometa.Lobby.Contract
 {
     /// All these methods must have exactly 1 parameter
     public interface ILobby
