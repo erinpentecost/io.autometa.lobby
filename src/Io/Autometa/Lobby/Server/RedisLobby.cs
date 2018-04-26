@@ -12,11 +12,19 @@ namespace Io.Autometa.Lobby
     {
         private static string ExpirationTimeSec = 600.ToString();
         private static int maxLobbySize = 30;
+
+        // It can actually be a little over this, depends on how big
+        // the batch result from Redis is.
         private static int maxSearchReturnSize = 100;
 
         private RedisOptions opt {get; set;}
 
         private string userIp {get;}
+
+        // Ensure that only one instance of keys[2] exists, based on keys[1]
+        private static string EnsureSingleLua =
+@"redis.call(""DEL"",redis.call(""GET"",KEYS[1]))
+redis.call(""SET"",KEYS[1],KEYS[2])";
 
         public RedisLobby(string connectionAddress, string userIp)
         {
@@ -50,6 +58,8 @@ namespace Io.Autometa.Lobby
                 gl.hidden = newLobby.hidden;
                 gl.lobbyID = newLobby.owner.game.GenerateID()
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
+
+                r.Send(RedisCommand.EVAL, EnsureSingleLua, "2", gl.host.ip, gl.lobbyID);
 
                 r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
 
@@ -107,6 +117,14 @@ namespace Io.Autometa.Lobby
             }
         }
 
+        public ServerResponse<GameLobby> Leave(LobbyRequest request)
+        {
+            // if caller is host, can kick anyone
+            // else, same person can quit
+            //maybe make it so one person can't be in multiple lobbies?
+            throw new NotImplementedException();
+        }
+
         ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
         {
             GameClient owner = request.client;
@@ -160,7 +178,6 @@ namespace Io.Autometa.Lobby
                     sr.lobbyID.AddRange(searchRes);
                     if (sr.lobbyID.Count > maxSearchReturnSize)
                     {
-                        sr.lobbyID.RemoveRange(maxLobbySize, maxLobbySize - sr.lobbyID.Count);
                         break;
                     }
                 }

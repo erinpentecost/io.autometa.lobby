@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Io.Autometa.Lobby.Contract;
-namespace Io.Autometa.Lobby
+
+namespace Io.Autometa.Lobby.Contract
 {
     /// All these methods must have exactly 1 parameter
     public interface ILobby
@@ -13,6 +13,9 @@ namespace Io.Autometa.Lobby
 
         /// Lock (close, shut down) a lobby.
         ServerResponse<GameLobby> Lock(LobbyRequest request);
+
+        /// Leave (or kick someone else, if you are the host)
+        ServerResponse<GameLobby> Leave(LobbyRequest request);
 
         /// Get lobby information when all you have it the id
         ServerResponse<GameLobby> Read(ReadRequest request);
