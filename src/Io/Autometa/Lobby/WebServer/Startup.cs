@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -45,6 +46,14 @@ namespace Io.Autometa.Lobby.WebServer
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             app.UseMvc();
+
+            // Accept forwarded-IP headers. This allows functionality
+            // for users behind NAT, but will also allow for IP spoofing.
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedProto
+            });
 
             // Expose swagger middleware for development
             app.UseSwagger();

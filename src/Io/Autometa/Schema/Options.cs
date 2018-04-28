@@ -8,7 +8,7 @@ namespace Io.Autometa.Schema
         [Option('d', "dll", Required = true, HelpText = "DLL to search.")]
         public string Dll { get; set; }
 
-        [Option('t', "type", Required = true, HelpText = "Name of type to search for.")]
+        [Option('t', "type", Required = true, HelpText = "Name of type to search for. If you specify a namespace, only Interfaces and DataContracts will be dumped.")]
         public string Type { get; set; }
 
         [Option('o', "outDir", Required = true, HelpText = "Directory to write to.")]

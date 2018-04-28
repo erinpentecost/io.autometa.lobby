@@ -18,8 +18,9 @@ namespace Io.Autometa.Lobby.Server
     {
         private static int maxBody = 4000;
         public static string lobbyMethodKey = "proxy";
+
         /// <summary>
-        /// A simple function that takes a string and does a ToUpper
+        /// Entry into application via AWS
         /// </summary>
         /// <param name="input"></param>
         /// <param name="context"></param>
@@ -27,12 +28,6 @@ namespace Io.Autometa.Lobby.Server
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public object FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
-            /*
-            event['pathParameters']['param1']
-            event["queryStringParameters"]['queryparam1']
-            event['requestContext']['identity']['userAgent']
-            event['requestContext']['identity']['sourceIP']
-             */
             //https://mynkc1sp17.execute-api.us-west-2.amazonaws.com/lobby/lobby
 
             object mappedResponse = null;
@@ -41,7 +36,6 @@ namespace Io.Autometa.Lobby.Server
             {
                 string sourceIP = input?.RequestContext?.Identity?.SourceIp;
 
-                /// TODO null ref exception in below line
                 var ivc = new ValidationCheck()
                     .Assert(input != null, "input is null")
                     .Assert(context != null, "context is null")
@@ -82,6 +76,7 @@ namespace Io.Autometa.Lobby.Server
             return WrapResponse(mappedResponse);
         }
 
+        // Ensure all responses are in the correct format
         private static APIGatewayProxyResponse WrapResponse(
             object toSerialize)
         {
@@ -93,9 +88,11 @@ namespace Io.Autometa.Lobby.Server
             };
         }
 
+        // Custom router
         public object MapToLobby(ILobby lobby, string param, string body)
         {
-            var method = typeof(ILobby).GetMethod(param.Trim());
+            var method = typeof(ILobby).GetMethods()
+                .First(m => string.Equals(m.Name, param.Trim(), StringComparison.InvariantCultureIgnoreCase));
             var vc = new ValidationCheck()
                 .Assert(method != null, "invalid method (" + param + ")");
             if (!vc.result)

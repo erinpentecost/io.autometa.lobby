@@ -14,7 +14,7 @@
     ]
   },
   {
-    "Name": "Lock",
+    "Name": "Leave",
     "Return": "ServerResponse(GameLobby)",
     "Input": [
       "LobbyRequest"

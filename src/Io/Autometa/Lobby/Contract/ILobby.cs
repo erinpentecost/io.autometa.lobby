@@ -2,7 +2,8 @@ using System.Collections.Generic;
 
 namespace Io.Autometa.Lobby.Contract
 {
-    /// All these methods must have exactly 1 parameter
+    /// All these methods must have exactly 1 parameter,
+    /// and should all return a ServerResponse.
     public interface ILobby
     {
         /// Create a new lobby, with the caller as the host

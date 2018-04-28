@@ -16,10 +16,9 @@ namespace Io.Autometa.Lobby.WebServer.Controllers
         [AcceptVerbs("POST")]
         ServerResponse<GameLobby> Create(CreateGameLobby newLobby)
         {
-            string ip = HttpContext.Current.Request.UserHostAddress;
             ILobby lobby = new RedisLobby(
                     Environment.GetEnvironmentVariable("ElasticacheConnectionString"),
-                    sourceIP);
+                    "DUMMY");
 
             return lobby.Create(newLobby);
         }

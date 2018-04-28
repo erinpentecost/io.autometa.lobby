@@ -7,6 +7,8 @@ using CommandLine;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.Serialization;
+using System.Collections.Concurrent;
 
 namespace Io.Autometa.Schema
 {
@@ -19,6 +21,8 @@ namespace Io.Autometa.Schema
                 .WithNotParsed<Options>((errs) => Error(errs));
         }
 
+        private static ConcurrentDictionary<Type, bool> finished = new ConcurrentDictionary<Type, bool>(); 
+
         private static void Run(Options opt)
         {
             try
@@ -28,6 +32,7 @@ namespace Io.Autometa.Schema
             catch (Exception ex)
             {
                 Console.Error.WriteLine(ex.ToString());
+                System.Environment.Exit(1);
             }
         }
 
@@ -51,6 +56,10 @@ namespace Io.Autometa.Schema
             {
                 Directory.CreateDirectory(outDir);
             }
+            foreach (var f in Directory.GetFiles(outDir))
+            {
+                File.Delete(f);
+            }
 
             if (foundType != default(Type))
             {
@@ -61,12 +70,39 @@ namespace Io.Autometa.Schema
                 var st = searchedType.TrimEnd('.', '*');
                 var nameSearch = Task.WhenAll(asm.GetTypes()
                 .Where(t => st.Equals(t.Namespace, StringComparison.InvariantCultureIgnoreCase))
-                .Select(async t => await DumpRootType(t, outDir)).ToArray());
+                .Select(async t => await DumpRootType(
+                    t,
+                    outDir,
+                    (f => f.IsInterface || (f.GetCustomAttributes(typeof(DataContractAttribute), true).Count() > 0))))
+                .ToArray());
+            }
+            else
+            {
+                throw new ArgumentException("Can't find type "+searchedType+" in "+ Dll);
             }
         }
 
-        private static async Task DumpRootType(Type foundType, string outDir)
+        private static async Task DumpRootType(Type foundType, string outDir, Func<Type,bool> filter = null)
         {
+            if (finished.ContainsKey(foundType))
+            {
+                return;
+            }
+            else
+            {
+                finished.AddOrUpdate(foundType, true, (t,b) => true);
+            }
+
+            if (filter == null)
+            {
+                filter = (t) => true;
+            }
+
+            if (!filter(foundType))
+            {
+                return;
+            }
+            
             var schema = await JsonSchema4.FromTypeAsync(foundType);
             await File.WriteAllTextAsync(Path.Combine(outDir, foundType.GetFriendlyName() + ".json"), schema.ToJson());
 
@@ -98,11 +134,11 @@ namespace Io.Autometa.Schema
                     Newtonsoft.Json.JsonConvert.SerializeObject(methods, Newtonsoft.Json.Formatting.Indented));
             }
 
-            derivedTypes = derivedTypes.Distinct().Where(t => !t.Namespace.StartsWith("System")).ToList();
+            derivedTypes = derivedTypes
+                .Where(t => string.Equals(t.Namespace, foundType.Namespace, StringComparison.InvariantCultureIgnoreCase)).ToList();
             foreach (var t in derivedTypes)
             {
-                var dSchema = await JsonSchema4.FromTypeAsync(t);
-                await File.WriteAllTextAsync(Path.Combine(outDir, t.GetFriendlyName() + ".json"), dSchema.ToJson());
+                await DumpRootType(t, outDir, filter);
             }
         }
 

@@ -30,6 +30,12 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
         {
             //https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis
             //lobby.sni07u.0001.usw2.cache.amazonaws.com:6379
+
+            if (string.IsNullOrEmpty(connectionAddress) || string.IsNullOrWhiteSpace(userIp))
+            {
+                throw new ArgumentNullException("Parameters to RedisLobby constructor are null or empty.");
+            }
+
             var splitUp = connectionAddress.Split(':', 2);
             this.opt = new RedisOptions();
             this.opt.Host = splitUp[0];
