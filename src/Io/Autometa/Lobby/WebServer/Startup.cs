@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore;
 using Swashbuckle.AspNetCore.Swagger;
 
-namespace WebServer
+namespace Io.Autometa.Lobby.WebServer
 {
     public class Startup
     {
@@ -34,7 +34,6 @@ namespace WebServer
             // Add S3 to the ASP.NET Core dependency injection framework.
             services.AddAWSService<Amazon.S3.IAmazonS3>();
 
-
             // Add Swagger
             services.AddSwaggerGen(c =>
             {
@@ -48,10 +47,7 @@ namespace WebServer
             app.UseMvc();
 
             // Expose swagger middleware for development
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", ApiTitle+" "+ApiVersion);
-            });
+            app.UseSwagger();
         }
     }
 }

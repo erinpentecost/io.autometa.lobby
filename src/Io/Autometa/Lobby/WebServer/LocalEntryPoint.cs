@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace WebServer
+namespace Io.Autometa.Lobby.WebServer
 {
     /// <summary>
     /// The Main function can be used to run the ASP.NET Core application locally using the Kestrel webserver.
