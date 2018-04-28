@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lobby\Contract\Io.Autometa.Lobby.Contract.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.2.1" />
     <PackageReference Include="NewtonSoft.Json" Version="11.0.2" />
     <PackageReference Include="NJsonSchema" Version="9.10.42" />

@@ -18,7 +18,7 @@ namespace Io.Autometa.Lobby.Contract
         [DataMember]
         public List<object> reason {get;set;}
 
-        private static readonly int maxStr = 69;
+        private const int maxStr = 69;
         private static char[] illegal = "\\/\"'{}:;&".ToCharArray();
 
 

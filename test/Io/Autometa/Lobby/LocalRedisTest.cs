@@ -10,6 +10,7 @@ using Io.Autometa.Lobby.Contract;
 using Newtonsoft.Json;
 using System.IO;
 using Io.Autometa.Schema;
+using Io.Autometa.Lobby.Server;
 
 namespace Io.Autometa.Lobby.Tests
 {
