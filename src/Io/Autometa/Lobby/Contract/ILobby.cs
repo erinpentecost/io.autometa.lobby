@@ -11,9 +11,6 @@ namespace Io.Autometa.Lobby.Contract
         /// Join an existing lobby
         ServerResponse<GameLobby> Join(LobbyRequest request);
 
-        /// Lock (close, shut down) a lobby.
-        ServerResponse<GameLobby> Lock(LobbyRequest request);
-
         /// Leave (or kick someone else, if you are the host)
         ServerResponse<GameLobby> Leave(LobbyRequest request);
 

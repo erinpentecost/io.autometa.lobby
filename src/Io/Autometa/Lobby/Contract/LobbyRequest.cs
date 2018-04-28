@@ -25,7 +25,7 @@ namespace Io.Autometa.Lobby.Contract
             return new ValidationCheck()
             .Assert(ValidationCheck.BasicStringCheck(this.lobbyId, "id"))
             .Assert(client != null, "client is null")
-            .Assert(lobbyId.StartsWith(client.game.gid), "lobby id is incorrect")
+            .Assert(lobbyId.StartsWith(client.game.gid, StringComparison.OrdinalIgnoreCase), "lobby id is incorrect")
             .Assert(client.Validate);
         }
     }

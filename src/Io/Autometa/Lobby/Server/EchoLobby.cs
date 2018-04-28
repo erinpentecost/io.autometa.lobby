@@ -5,8 +5,8 @@ namespace Io.Autometa.Lobby
 {
     public class EchoLobby : ILobby
     {
-        private List<object> message {get;}
-        private ValidationCheck vc {get;}
+        private List<object> message { get; }
+        private ValidationCheck vc { get; }
 
         public EchoLobby(object message)
         {
@@ -28,7 +28,7 @@ namespace Io.Autometa.Lobby
             return new ServerResponse<GameLobby>(null, this.vc);
         }
 
-        ServerResponse<GameLobby> ILobby.Lock(LobbyRequest request)
+        ServerResponse<GameLobby> ILobby.Leave(LobbyRequest request)
         {
             return new ServerResponse<GameLobby>(null, this.vc);
         }
