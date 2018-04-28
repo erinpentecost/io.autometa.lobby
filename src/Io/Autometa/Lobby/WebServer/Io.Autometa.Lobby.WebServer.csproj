@@ -19,4 +19,10 @@
     <DotNetCliToolReference Include="Amazon.Lambda.Tools" Version="2.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Redis\Io.Autometa.Redis.csproj" />
+    <ProjectReference Include="..\Contract\Io.Autometa.Lobby.Contract.csproj" />
+    <ProjectReference Include="..\Server\Io.Autometa.Lobby.Server.csproj" />
+  </ItemGroup>
+
 </Project>

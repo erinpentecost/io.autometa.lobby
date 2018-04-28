@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Io.Autometa.Lobby.Contract;
 
-namespace Io.Autometa.Lobby
+namespace Io.Autometa.Lobby.Server
 {
     public class EchoLobby : ILobby
     {

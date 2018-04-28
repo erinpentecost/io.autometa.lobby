@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
 
-namespace Io.Autometa.Lobby
+namespace Io.Autometa.Lobby.Server
 {
     public class Gateway
     {

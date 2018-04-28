@@ -6,7 +6,7 @@ using Io.Autometa.Lobby.Contract;
 using Io.Autometa.Redis;
 using Newtonsoft.Json;
 
-namespace Io.Autometa.Lobby
+namespace Io.Autometa.Lobby.Server
 {
     public class RedisLobby : ILobby
     {
