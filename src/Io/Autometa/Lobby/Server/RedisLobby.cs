@@ -29,12 +29,13 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
         public RedisLobby(string connectionAddress, string userIp)
         {
-            //https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/Endpoints.html#Endpoints.Find.Redis
-            //lobby.sni07u.0001.usw2.cache.amazonaws.com:6379
-
-            if (string.IsNullOrEmpty(connectionAddress) || string.IsNullOrWhiteSpace(userIp))
+            if (string.IsNullOrEmpty(connectionAddress))
             {
-                throw new ArgumentNullException("Parameters to RedisLobby constructor are null or empty.");
+                throw new ArgumentNullException(nameof(connectionAddress));
+            }
+            if (string.IsNullOrWhiteSpace(userIp))
+            {
+                throw new ArgumentNullException(nameof(userIp));
             }
 
             var splitUp = connectionAddress.Split(':', 2);
@@ -45,7 +46,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
         }
 
 
-        ServerResponse<GameLobby> ILobby.Create(CreateGameLobby newLobby)
+        ServerResponse<GameLobby> ILobby.Create(CreateGameLobbyRequest newLobby)
         {
             var vc = newLobby.Validate();
             if (!vc.result)
@@ -61,16 +62,17 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 gl.host = newLobby.owner;
                 gl.host.ip = this.userIp; // override user-supplied ip
                 gl.game = newLobby.owner.game;
-                gl.locked = false;
                 gl.hidden = newLobby.hidden;
                 gl.lobbyID = newLobby.owner.game.GenerateID()
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
+                
+                gl.metaData = newLobby.metaData;
 
                 var pipe = new RedisPipeline()
-                // only allow one game to be hosted per IP address
-                .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host:" + gl.host.ip, gl.lobbyID)
-                // actually create the lobby
-                .Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
+                    // only allow one game to be hosted per IP address
+                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host:" + gl.host.ip, gl.lobbyID)
+                    // actually create the lobby
+                    .Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
 
                 r.Send(pipe);
 
@@ -107,7 +109,6 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(!gl.locked, "game is locked")
                     .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Assert(gl.host.uid != client.uid, "host can't join her own game")
                     .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
@@ -152,7 +153,6 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(!gl.locked, "game is locked")
                     .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
@@ -205,15 +205,16 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 {
                     foreach (var key in searchRes)
                     {
+                        // build up messages to get more data
                         pipe
-                        .Send(RedisCommand.GET, key);
+                            .Send(RedisCommand.GET, key);
 
-                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
                         {
                             break;
                         }
                     }
-                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
                     {
                         break;
                     }

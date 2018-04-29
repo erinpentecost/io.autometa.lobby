@@ -15,5 +15,5 @@
   "function-runtime":"dotnetcore2.0",
   "function-memory-size" : 256,
   "function-timeout" : 30,
-  "function-handler" : "Io.Autometa.Lobby::Io.Autometa.Lobby.Gateway::FunctionHandler"
+  "function-handler" : "Io.Autometa.Lobby.Server::Io.Autometa.Lobby.Server.Gateway::FunctionHandler"
 }

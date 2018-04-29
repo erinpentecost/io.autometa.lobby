@@ -4,7 +4,6 @@ using System.Runtime.Serialization;
 
 namespace Io.Autometa.Lobby.Contract
 {
-    /// This is an instance of an actual game lobby.
     [DataContract]
     public class SearchResponse : IMessage
     {
