@@ -1,8 +1,21 @@
 # Io.Autometa.Lobby
 
-https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/Create
+https://lobby.autometa.io/
 
 
+## /Create
+```CSharp
+ServerResponse<GameLobby> Create(CreateGameLobbyRequest newLobby);
+```
+
+```bash
+curl -H "Content-Type: application/json" -X POST -d '{"owner":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"hidden":false}' https://lobby.autometa.io/Create
+```
+```CSharp
+[ServerResponse<GameLobby>](../src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Create([CreateGameLobbyRequest](../src/Io/Autometa/Lobby/Contract/Schema/CreateGameLobbyRequest.json) newLobby);
+```
+
+[ServerResponse<GameLobby>](../src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Create([CreateGameLobbyRequest](../src/Io/Autometa/Lobby/Contract/Schema/CreateGameLobbyRequest.json) newLobby);
 
 ## Create(CreateGameLobby) -> ServerResponse(GameLobby)
 CreateGameLobby
