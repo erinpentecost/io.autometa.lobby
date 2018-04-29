@@ -16,6 +16,15 @@
     },
     "hidden": {
       "type": "boolean"
+    },
+    "metaData": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      }
     }
   },
   "definitions": {
