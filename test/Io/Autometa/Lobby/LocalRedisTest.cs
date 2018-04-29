@@ -60,9 +60,9 @@ namespace Io.Autometa.Lobby.Tests
             // Find the lobby
             var searchResp1 = this.r.Search(gcHost.game);
             AssertExt.Valid(searchResp1);
-            Assert.True(searchResp1.response.lobbyID.Count > 0);
-            Assert.True(searchResp1.response.lobbyID
-                .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
+            Assert.True(searchResp1.response.lobbies.Count > 0);
+            Assert.True(searchResp1.response.lobbies
+                .Any(lobby => lobby.lobbyID == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             DumpExample(searchResp1);
 
             // Re-read the lobby
@@ -82,9 +82,9 @@ namespace Io.Autometa.Lobby.Tests
             
             var searchResp2 = this.r.Search(gcUser.game);
             AssertExt.Valid(searchResp2);
-            Assert.True(searchResp2.response.lobbyID.Count > 0);
-            Assert.True(searchResp2.response.lobbyID
-                .Any(id => id == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
+            Assert.True(searchResp2.response.lobbies.Count > 0);
+            Assert.True(searchResp2.response.lobbies
+                .Any(lobby => lobby.lobbyID == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             
             // Re-read the lobby as a different user
             var readResp2 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));

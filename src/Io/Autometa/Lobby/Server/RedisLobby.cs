@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using Io.Autometa.Lobby.Contract;
@@ -183,6 +184,10 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
         }
         ServerResponse<SearchResponse> ILobby.Search(Game game)
         {
+            // ms
+            long maxTime = 3000;
+            Stopwatch runTime = new Stopwatch();
+            runTime.Start();
             var vc = game.Validate();
 
             if (!vc.result)
@@ -191,20 +196,47 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             }
 
             SearchResponse sr = new SearchResponse();
-            sr.lobbyID = new List<string>();
+            sr.lobbies = new List<GameLobby>();
+            RedisPipeline pipe = new RedisPipeline();
             using (var r = new RedisClient(this.opt))
             {
+                // get keys
                 foreach (var searchRes in r.Scan(RedisCommand.SCAN, game.gid + "*[^$]"))
                 {
-                    sr.lobbyID.AddRange(searchRes);
-                    if (sr.lobbyID.Count > maxSearchReturnSize)
+                    foreach (var key in searchRes)
+                    {
+                        pipe
+                        .Send(RedisCommand.GET, key);
+
+                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                        {
+                            break;
+                        }
+                    }
+                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                    {
+                        break;
+                    }
+                }
+
+                // get lobby data
+                foreach (var lobby in r.Send(pipe))
+                {
+                    string lobbyStr = Encoding.UTF8.GetString(lobby);
+                    GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
+
+                    sr.lobbies.Add(gl);
+
+                    if (runTime.ElapsedMilliseconds > maxTime)
                     {
                         break;
                     }
                 }
             }
 
-            return new ServerResponse<SearchResponse>(sr, null);
+            return new ServerResponse<SearchResponse>(
+                sr,
+                new ValidationCheck(true, "completed in " + runTime.Elapsed.TotalSeconds + " seconds"));
         }
 
         ServerResponse<GameLobby> ILobby.Read(ReadRequest request)

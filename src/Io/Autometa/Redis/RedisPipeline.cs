@@ -13,6 +13,13 @@ namespace Io.Autometa.Redis
         {
         }
 
+        public int Length
+        {
+            get {
+                return commands.Count();
+            }
+        }
+
         public dynamic Send(RedisCommand command) => Send(command.ToString());
         public dynamic Send(string command)
         {
