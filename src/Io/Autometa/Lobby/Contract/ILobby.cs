@@ -15,10 +15,11 @@ namespace Io.Autometa.Lobby.Contract
         /// </summary>
         /// <param name="newLobby">lobby creation parameters</param>
         /// <returns>the lobby that was created</returns>
-        ServerResponse<GameLobby> Create(CreateGameLobby newLobby);
+        ServerResponse<GameLobby> Create(CreateGameLobbyRequest newLobby);
 
         /// <summary>
         /// Join an existing lobby.
+        /// This will refresh the expiration timer on the lobby.
         /// </summary>
         /// <param name="request">lobby to join</param>
         /// <returns>the lobby that was joined</returns>
@@ -29,6 +30,8 @@ namespace Io.Autometa.Lobby.Contract
         /// any client may be kicked. If the caller is the owner
         /// and leaves herself, the lobby will be deleted.
         /// Otherwise, clients can call Leave on themselves.
+        /// This will refresh the expiration timer on the lobby,
+        /// unless the lobby was deleted by the host.
         /// </summary>
         /// <param name="request">lobby to leave</param>
         /// <returns>the lobby that was left</returns>

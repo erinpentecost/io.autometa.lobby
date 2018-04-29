@@ -47,7 +47,7 @@ namespace Io.Autometa.Lobby.Tests
             gcHost.port = 6969;
             DumpExample(gcHost);
 
-            CreateGameLobby cgl = new CreateGameLobby();
+            CreateGameLobbyRequest cgl = new CreateGameLobbyRequest();
             cgl.owner = gcHost;
             cgl.hidden = false;
             DumpExample(cgl);

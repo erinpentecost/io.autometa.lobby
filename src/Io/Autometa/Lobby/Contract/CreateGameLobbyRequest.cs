@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 namespace Io.Autometa.Lobby.Contract
 {
     [DataContract]
-    public class CreateGameLobby : IMessage
+    public class CreateGameLobbyRequest : IMessage
     {
         [DataMember]
         public GameClient owner {get; set;}
@@ -18,6 +18,12 @@ namespace Io.Autometa.Lobby.Contract
         /// <returns>true if the game is hidden</returns>
         [DataMember]
         public bool hidden {get; set;}
+
+        /// <summary>
+        /// Arbitrary metadata. Ignored by the lobby system.
+        /// </summary>
+        [DataMember]
+        public Dictionary<string,string> metaData {get; set;}
 
         public ValidationCheck Validate()
         {

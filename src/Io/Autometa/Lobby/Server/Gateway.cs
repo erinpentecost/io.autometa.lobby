@@ -43,8 +43,8 @@ namespace Io.Autometa.Lobby.Server
                     .Assert(() => string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
                     .Assert(() => input.Headers != null && input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
                     .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
-                    .Assert(() => input.Body != null, "body is null")
-                    .Assert(() => input.Body.Length < maxBody, "body length is too long (" + input.Body.Length + "/" + maxBody.ToString() + ")")
+                    .Assert(() => !string.IsNullOrWhiteSpace(input.Body), "body is null")
+                    .Assert(() => input.Body.Length <= maxBody, "body length is too long (" + input.Body.Length + "/" + maxBody.ToString() + ")")
                     .Assert(() => input.PathParameters != null, "path parameters are null")
                     .Assert(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key (" + lobbyMethodKey + ")")
                     .Assert(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty (" + lobbyMethodKey + ")")
@@ -52,6 +52,19 @@ namespace Io.Autometa.Lobby.Server
                 if (!ivc.result)
                 {
                     return WrapResponse(ivc);
+                }
+
+                // Handle http proxy servers. This opens up the lobby service to forgeries.
+                // A way around this would be to give the host a token that they must send back
+                // to the server for all host actions, but since the lobby is public and
+                // exploitable anyway, I'm not really worried about people messing with it.
+                // https://en.wikipedia.org/wiki/X-Forwarded-For
+                if (input.Headers.ContainsKey("X-Forwarded-For"))
+                {
+                    sourceIP = input.Headers["X-Forwarded-For"]
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .First()
+                        .Trim();
                 }
 
                 ILobby lobby = new RedisLobby(
@@ -88,9 +101,16 @@ namespace Io.Autometa.Lobby.Server
             };
         }
 
-        // Custom router
-        public object MapToLobby(ILobby lobby, string param, string body)
+        /// <summary>
+        /// Super basic path router
+        /// </summary>
+        /// <param name="lobby">lobby instance to use</param>
+        /// <param name="param">method to call on ILobby</param>
+        /// <param name="body">json POST content</param>
+        /// <returns></returns>
+        public static object MapToLobby(ILobby lobby, string param, string body)
         {
+            // Find the method in ILobby that corresponds to param
             var method = typeof(ILobby).GetMethods()
                 .First(m => string.Equals(m.Name, param.Trim(), StringComparison.InvariantCultureIgnoreCase));
             var vc = new ValidationCheck()
@@ -100,9 +120,11 @@ namespace Io.Autometa.Lobby.Server
                 return vc;
             }
 
+            // Cast the raw POST content into the type expected by the method.
             var expectedParamType = method.GetParameters()[0].ParameterType;
             var castedBody = JsonConvert.DeserializeObject(body, expectedParamType);
 
+            // Call the method and return its output
             return method.Invoke(lobby, new object[] { castedBody });
         }
     }

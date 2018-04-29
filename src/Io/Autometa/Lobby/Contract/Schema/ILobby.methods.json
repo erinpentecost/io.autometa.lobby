@@ -3,7 +3,7 @@
     "Name": "Create",
     "Return": "ServerResponse(GameLobby)",
     "Input": [
-      "CreateGameLobby"
+      "CreateGameLobbyRequest"
     ]
   },
   {

@@ -14,7 +14,7 @@ namespace Io.Autometa.Lobby.WebServer.Controllers
     {
         [HttpPost("create")]
         [AcceptVerbs("POST")]
-        ServerResponse<GameLobby> Create(CreateGameLobby newLobby)
+        ServerResponse<GameLobby> Create(CreateGameLobbyRequest newLobby)
         {
             ILobby lobby = new RedisLobby(
                     Environment.GetEnvironmentVariable("ElasticacheConnectionString"),
