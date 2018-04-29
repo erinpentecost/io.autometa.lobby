@@ -16,14 +16,14 @@ namespace Io.Autometa.Lobby.Contract
         public string lobbyID {get; set;}
 
         [DataMember]
-        public Game game {get; set;}
+        public Game gameType {get; set;}
 
         [DataMember]
-        public GameClient host {get; set;}
+        public Client host {get; set;}
 
         /// List of all clients in a lobby
         [DataMember]
-        public List<GameClient> clients {get; set;}
+        public List<Client> clients {get; set;}
 
         /// Start time of lobby creation (not game start time)
         [DataMember]

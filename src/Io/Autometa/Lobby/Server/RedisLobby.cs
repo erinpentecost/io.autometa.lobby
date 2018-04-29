@@ -57,13 +57,13 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             using (var r = new RedisClient(this.opt))
             {
                 GameLobby gl = new GameLobby();
-                gl.clients = new List<GameClient>();
+                gl.clients = new List<Client>();
                 gl.creationTime = DateTime.UtcNow;
                 gl.host = newLobby.owner;
                 gl.host.ip = this.userIp; // override user-supplied ip
-                gl.game = newLobby.owner.game;
+                gl.gameType = newLobby.gameType;
                 gl.hidden = newLobby.hidden;
-                gl.lobbyID = newLobby.owner.game.GenerateID()
+                gl.lobbyID = newLobby.gameType.GenerateID()
                     + (gl.hidden ? "$" : string.Empty); // dumb magic character
                 
                 gl.metaData = newLobby.metaData;
@@ -87,7 +87,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
         ServerResponse<GameLobby> ILobby.Join(LobbyRequest request)
         {
-            GameClient client = request.client;
+            Client client = request.client;
             client.ip = this.userIp; // override user-supplied ip
 
             var vc = request.Validate();
@@ -109,7 +109,6 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Assert(gl.host.uid != client.uid, "host can't join her own game")
                     .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
                     .Assert(gl.lobbyID == request.lobbyId, "lobby id changed")
@@ -132,7 +131,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
         public ServerResponse<GameLobby> Leave(LobbyRequest request)
         {
             // unlike other methods, the Host can force a different user to Leave
-            GameClient client = request.client;
+            Client client = request.client;
 
             var vc = request.Validate();
             if (!vc.result)
@@ -153,7 +152,6 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(gl.game.gid == client.game.gid, "game api is mismatched")
                     .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
                 if (!blc.result)
                 {
@@ -267,7 +265,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame[0]);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 var blc = new ValidationCheck()
-                    .Assert(gl.game.gid == request.game.gid, "game api is mismatched");
+                    .Assert(gl.gameType.gid == request.game.gid, "game api is mismatched");
                 if (!blc.result)
                 {
                     return new ServerResponse<GameLobby>(

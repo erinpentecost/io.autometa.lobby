@@ -42,7 +42,7 @@
             "string"
           ]
         },
-        "game": {
+        "gameType": {
           "oneOf": [
             {
               "type": "null"
@@ -58,7 +58,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/definitions/GameClient"
+              "$ref": "#/definitions/Client"
             }
           ]
         },
@@ -68,7 +68,7 @@
             "null"
           ],
           "items": {
-            "$ref": "#/definitions/GameClient"
+            "$ref": "#/definitions/Client"
           }
         },
         "creationTime": {
@@ -105,7 +105,7 @@
         }
       }
     },
-    "GameClient": {
+    "Client": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -118,16 +118,6 @@
         "port": {
           "type": "integer",
           "format": "int32"
-        },
-        "game": {
-          "oneOf": [
-            {
-              "type": "null"
-            },
-            {
-              "$ref": "#/definitions/Game"
-            }
-          ]
         },
         "nickName": {
           "type": [

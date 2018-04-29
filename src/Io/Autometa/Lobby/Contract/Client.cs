@@ -5,7 +5,7 @@ namespace Io.Autometa.Lobby.Contract
 {
     /// This is an instance of a game that a user is running.
     [DataContract]
-    public class GameClient : IMessage
+    public class Client : IMessage
     {
         /// <summary>
         /// IP address for the game client.
@@ -20,13 +20,6 @@ namespace Io.Autometa.Lobby.Contract
         /// <returns></returns>
         [DataMember]
         public int port {get; set;}
-
-        /// <summary>
-        /// Identifies the game for this client
-        /// </summary>
-        /// <returns></returns>
-        [DataMember]
-        public Game game {get; set;}
 
         /// <summary>
         /// User-configurable nickname to identify the game client.
@@ -52,9 +45,7 @@ namespace Io.Autometa.Lobby.Contract
         {
             return new ValidationCheck()
             .Assert(ValidationCheck.BasicStringCheck(this.ip, "ip"))
-            .Assert(this.port >= 100, "port < 100")
-            .Assert(this.game != null, "game is null")
-            .Assert(this.game.Validate);
+            .Assert(this.port >= 100, "port < 100");
         }
     }
 }
