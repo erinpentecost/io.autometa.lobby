@@ -7,24 +7,39 @@ namespace Io.Autometa.Lobby.Contract
     [DataContract]
     public class GameClient : IMessage
     {
+        /// <summary>
         /// IP address for the game client.
-        /// This may be IPv4 or IPv6 or whatever.
+        /// </summary>
+        /// <returns></returns>
         [DataMember]
         public string ip {get; set;}
 
+        /// <summary>
         /// Communication port for the peer-to-peer connection.
+        /// </summary>
+        /// <returns></returns>
         [DataMember]
         public int port {get; set;}
 
-        /// Which game is this client using?
+        /// <summary>
+        /// Identifies the game for this client
+        /// </summary>
+        /// <returns></returns>
         [DataMember]
         public Game game {get; set;}
 
+        /// <summary>
         /// User-configurable nickname to identify the game client.
+        /// Lobby system ignores this, use it however you want.
+        /// </summary>
+        /// <returns></returns>
         [DataMember]
         public string nickName {get; set;}
 
-        /// User unique id
+        /// <summary>
+        /// User unique id based on ip + port.
+        /// </summary>
+        /// <returns></returns>
         public string uid
         {
             get
