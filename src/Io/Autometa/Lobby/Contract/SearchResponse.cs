@@ -9,7 +9,7 @@ namespace Io.Autometa.Lobby.Contract
     public class SearchResponse : IMessage
     {
         [DataMember]
-        public List<string> lobbyID {get; set;}
+        public List<GameLobby> lobbies {get; set;}
 
         public ValidationCheck Validate()
         {
