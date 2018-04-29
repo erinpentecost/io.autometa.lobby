@@ -23,6 +23,7 @@ namespace Io.Autometa.Lobby.Server
         private string userIp { get; }
 
         // Ensure that only one instance of keys[2] exists, based on keys[1]
+        // Note that SETEX may be deprecated at some point
         private static string EnsureSingleLua =
 @"redis.call(""DEL"",redis.call(""GET"",KEYS[1]))
 redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
@@ -72,7 +73,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                     // only allow one game to be hosted per IP address
                     .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host:" + gl.host.ip, gl.lobbyID)
                     // actually create the lobby
-                    .Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
+                    .Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "EX", ExpirationTimeSec);
 
                 r.Send(pipe);
 
@@ -122,7 +123,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
                 gl.clients.Add(client);
 
-                r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
+                r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
 
                 return new ServerResponse<GameLobby>(gl, null);
             }
@@ -169,7 +170,8 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 else if ((gl.host.ip == this.userIp) || (client.ip == this.userIp))
                 {
                     gl.clients.RemoveAll(c => c.ip == client.ip);
-                    r.Send(RedisCommand.SETEX, gl.lobbyID, ExpirationTimeSec, JsonConvert.SerializeObject(gl));
+
+                    r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
                 }
                 else
                 {
