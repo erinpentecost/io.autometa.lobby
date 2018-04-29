@@ -40,8 +40,7 @@ namespace Io.Autometa.Lobby.Tests
         [Fact]
         public void IntegrationTest()
         {
-            GameClient gcHost = new GameClient();
-            gcHost.game = this.testGame;
+            Client gcHost = new Client();
             gcHost.nickName = nameof(gcHost.nickName);
             gcHost.ip = "localhost";
             gcHost.port = 6969;
@@ -49,6 +48,7 @@ namespace Io.Autometa.Lobby.Tests
 
             CreateGameLobbyRequest cgl = new CreateGameLobbyRequest();
             cgl.owner = gcHost;
+            cgl.gameType = this.testGame;
             cgl.hidden = false;
             DumpExample(cgl);
 
@@ -58,7 +58,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(createResp);
 
             // Find the lobby
-            var searchResp1 = this.r.Search(gcHost.game);
+            var searchResp1 = this.r.Search(this.testGame);
             AssertExt.Valid(searchResp1);
             Assert.True(searchResp1.response.lobbies.Count > 0);
             Assert.True(searchResp1.response.lobbies
@@ -66,7 +66,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(searchResp1);
 
             // Re-read the lobby
-            var readResp1 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcHost.game));
+            var readResp1 = this.r.Read(new ReadRequest(createResp.response.lobbyID, cgl.gameType));
             AssertExt.Valid(readResp1);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
@@ -74,26 +74,25 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(readResp1);
 
             // Find the lobby as a different user.
-            GameClient gcUser = new GameClient();
-            gcUser.game = this.testGame;
-            gcUser.nickName = "nonowner";
-            gcUser.ip = "localhost";
-            gcUser.port = 6960;
-            
-            var searchResp2 = this.r.Search(gcUser.game);
+
+            var searchResp2 = this.r.Search(this.testGame);
             AssertExt.Valid(searchResp2);
             Assert.True(searchResp2.response.lobbies.Count > 0);
             Assert.True(searchResp2.response.lobbies
                 .Any(lobby => lobby.lobbyID == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
             
             // Re-read the lobby as a different user
-            var readResp2 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));
+            var readResp2 = this.r.Read(new ReadRequest(createResp.response.lobbyID, this.testGame));
             AssertExt.Valid(readResp2);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp.response),
                 JsonConvert.SerializeObject(readResp2.response));
             
             // Join the lobby!
+            Client gcUser = new Client();
+            gcHost.nickName = "some client";
+            gcUser.ip = "127.0.0.1";
+            gcUser.port = 9000;
             var joinReq = new LobbyRequest(createResp.response.lobbyID, gcUser);
             DumpExample(joinReq);
             var joinResp = this.r.Join(joinReq);
@@ -101,8 +100,7 @@ namespace Io.Autometa.Lobby.Tests
             DumpExample(joinResp);
 
             // Read it again and verify we are in now
-            // there is a bug now
-            var readResp3 = this.r.Read(new ReadRequest(createResp.response.lobbyID, gcUser.game));
+            var readResp3 = this.r.Read(new ReadRequest(createResp.response.lobbyID, this.testGame));
             AssertExt.Valid(readResp2);
             Assert.NotEqual(
                 JsonConvert.SerializeObject(createResp.response),

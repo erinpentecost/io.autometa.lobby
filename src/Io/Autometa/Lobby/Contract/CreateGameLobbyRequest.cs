@@ -8,7 +8,10 @@ namespace Io.Autometa.Lobby.Contract
     public class CreateGameLobbyRequest : IMessage
     {
         [DataMember]
-        public GameClient owner {get; set;}
+        public Client owner {get; set;}
+
+        [DataMember]
+        public Game gameType {get; set;}
 
         /// <summary>
         /// This will prevent the lobby from showing up on the search list.

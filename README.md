@@ -3,49 +3,25 @@
 https://lobby.autometa.io/
 
 
-## /Create
-```CSharp
-ServerResponse<GameLobby> Create(CreateGameLobbyRequest newLobby);
-```
+## https://lobby.autometa.io/Create
+[ServerResponse<GameLobby>](./src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Create([CreateGameLobbyRequest](./src/Io/Autometa/Lobby/Contract/Schema/CreateGameLobbyRequest.json) newLobby)
 
 ```bash
-curl -H "Content-Type: application/json" -X POST -d '{"owner":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"hidden":false}' https://lobby.autometa.io/Create
-```
-```CSharp
-[ServerResponse<GameLobby>](../src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Create([CreateGameLobbyRequest](../src/Io/Autometa/Lobby/Contract/Schema/CreateGameLobbyRequest.json) newLobby);
+curl -H "Content-Type: application/json" -X POST -d '{"owner":{"ip":"localhost","port":6969,"nickName":"some server"},"gameType":{"id":"LocalRedisTest","api":1},"hidden":false}' https://lobby.autometa.io/Create
 ```
 
-[ServerResponse<GameLobby>](../src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Create([CreateGameLobbyRequest](../src/Io/Autometa/Lobby/Contract/Schema/CreateGameLobbyRequest.json) newLobby);
-
-## Create(CreateGameLobby) -> ServerResponse(GameLobby)
-CreateGameLobby
-```json
-{"owner":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"hidden":false}
-```
-ServerResponse(GameLobby)
-```json
-{"response":{"lobbyID":"LocalRedisTestv1-279c656425","game":{"id":"LocalRedisTest","api":1},"host":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"clients":[{"ip":"localhost","port":6960,"game":{"id":"LocalRedisTest","api":1},"nickName":"nonowner"}],"creationTime":"0001-01-01T00:00:00","locked":false,"hidden":false},"valid":{"result":true,"reason":[]}}
-```
+## https://lobby.autometa.io/Join
+[ServerResponse<GameLobby>](./src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Join([LobbyRequest](./src/Io/Autometa/Lobby/Contract/Schema/LobbyRequest.json) request)
 
 ```bash
-curl -H "Content-Type: application/json" -X POST -d '{"owner":{"ip":"localhost","port":6969,"game":{"id":"LocalRedisTest","api":1},"nickName":"nickName"},"hidden":false}' https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/Create
+curl -H "Content-Type: application/json" -X POST -d '{"lobbyId":"LocalRedisTestv1-7Y5FBA","client":{"ip":"localhost","port":6969,"nickName":"some client"}}' https://lobby.autometa.io/Join
 ```
 
-## Join(LobbyRequest) -> ServerResponse(GameLobby)
-LobbyRequest
-```json
-{"lobbyId":"LocalRedisTestv1-279c656425","client":{"ip":"localhost","port":6960,"game":{"id":"LocalRedisTest","api":1},"nickName":"nonowner"}}
-```
-## Lock(LobbyRequest) -> ServerResponse(GameLobby)
-## Read(LobbyRequest) -> ServerResponse(GameLobby)
-## Search(Game) -> ServerResponse(SearchResponse)
-Game
+## https://lobby.autometa.io/Leave
+[ServerResponse<GameLobby>](./src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Leave([LobbyRequest](./src/Io/Autometa/Lobby/Contract/Schema/LobbyRequest.json) request)
 
-ServerResponse(SearchResponse)
-```json
-{"response":{"lobbyID":["LocalRedisTestv1-279c656425"]},"valid":{"result":true,"reason":[]}}
-```
+## https://lobby.autometa.io/Read
+[ServerResponse<GameLobby>](./src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(GameLobby).json) Read([LobbyRequest](./src/Io/Autometa/Lobby/Contract/Schema/ReadRequest.json) request)
 
-```bash
-curl -H "Content-Type: application/json" -X POST -d '{"id":"LocalRedisTest","api":1}' https://xp92sqtki2.execute-api.us-west-2.amazonaws.com/deploy/Search
-```
+## https://lobby.autometa.io/Search
+[ServerResponse<SearchResponse>](./src/Io/Autometa/Lobby/Contract/Schema/ServerResponse(SearchResponse).json) Search([Game](./src/Io/Autometa/Lobby/Contract/Schema/Game.json) game)

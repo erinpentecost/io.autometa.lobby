@@ -16,13 +16,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/definitions/GameClient"
+          "$ref": "#/definitions/Client"
         }
       ]
     }
   },
   "definitions": {
-    "GameClient": {
+    "Client": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -36,37 +36,11 @@
           "type": "integer",
           "format": "int32"
         },
-        "game": {
-          "oneOf": [
-            {
-              "type": "null"
-            },
-            {
-              "$ref": "#/definitions/Game"
-            }
-          ]
-        },
         "nickName": {
           "type": [
             "null",
             "string"
           ]
-        }
-      }
-    },
-    "Game": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "id": {
-          "type": [
-            "null",
-            "string"
-          ]
-        },
-        "api": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     }
