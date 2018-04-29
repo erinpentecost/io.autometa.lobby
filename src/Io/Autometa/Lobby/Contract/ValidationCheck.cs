@@ -52,7 +52,12 @@ namespace Io.Autometa.Lobby.Contract
             }
         }
 
-        /// Conditionall executed
+        /// <summary>
+        /// Conditionally executed only if currently not in error state
+        /// </summary>
+        /// <param name="result">function to execute</param>
+        /// <param name="reason">error message</param>
+        /// <returns></returns>
         public ValidationCheck Assert(Func<bool> result, string reason)
         {
             if (this.result)
@@ -72,7 +77,11 @@ namespace Io.Autometa.Lobby.Contract
             return this;
         }
 
-        /// Conditionally executed
+        /// <summary>
+        /// Conditionally executed only if currently not in error state
+        /// </summary>
+        /// <param name="check">function to execute</param>
+        /// <returns>result of check</returns>
         public ValidationCheck Assert(Func<ValidationCheck> check)
         {
             if (this.result)
@@ -106,7 +115,12 @@ namespace Io.Autometa.Lobby.Contract
             }
         }
 
+        /// <summary>
         /// Enforces some arbitrary restraints on strings as a sanity check.
+        /// </summary>
+        /// <param name="strToCheck">string to check</param>
+        /// <param name="id">optional prefix to use for error messages</param>
+        /// <returns>result of check</returns>
         public static ValidationCheck BasicStringCheck(string strToCheck, string id = null)
         {
             string prefix = string.Empty;

@@ -205,15 +205,16 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 {
                     foreach (var key in searchRes)
                     {
+                        // build up messages to get more data
                         pipe
-                        .Send(RedisCommand.GET, key);
+                            .Send(RedisCommand.GET, key);
 
-                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
                         {
                             break;
                         }
                     }
-                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime)
+                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
                     {
                         break;
                     }
