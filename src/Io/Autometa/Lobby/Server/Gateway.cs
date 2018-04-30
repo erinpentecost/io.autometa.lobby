@@ -19,6 +19,8 @@ namespace Io.Autometa.Lobby.Server
         private static int maxBody = 4000;
         public static string lobbyMethodKey = "proxy";
 
+        private static string redirect = "http://autometa.io";
+
         /// <summary>
         /// Entry into application via AWS
         /// </summary>
@@ -28,8 +30,6 @@ namespace Io.Autometa.Lobby.Server
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public object FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
-            object mappedResponse = null;
-
             try
             {
                 string sourceIP = input?.RequestContext?.Identity?.SourceIp;
@@ -41,8 +41,8 @@ namespace Io.Autometa.Lobby.Server
                     .Assert(() => !string.IsNullOrWhiteSpace(input.HttpMethod), "http method not supplied")
                     .Assert(() => string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
                     .Assert(() => input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
-                    .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
-                    .Assert(() => !string.IsNullOrWhiteSpace(input.Body), "body is null")
+                    .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json");
+                ivc.Assert(() => !string.IsNullOrWhiteSpace(input.Body), "body is null")
                     .Assert(() => input.Body.Length <= maxBody, "body length is too long (" + input.Body.Length + "/" + maxBody.ToString() + ")")
                     .Assert(() => input.PathParameters != null, "path parameters are null")
                     .Assert(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key (" + lobbyMethodKey + ")")
@@ -50,7 +50,7 @@ namespace Io.Autometa.Lobby.Server
                     .Assert(() => !string.IsNullOrWhiteSpace(sourceIP), "source ip is empty");
                 if (!ivc.result)
                 {
-                    return WrapResponse(ivc);
+                    return WrapResponse(ivc, HttpStatusCode.Redirect);
                 }
 
                 // Handle http proxy servers. This opens up the lobby service to forgeries.
@@ -70,10 +70,11 @@ namespace Io.Autometa.Lobby.Server
                         Environment.GetEnvironmentVariable("ElasticacheConnectionString"),
                         sourceIP);
 
-                mappedResponse = MapToLobby(
+                var lobbyResp = MapToLobby(
                     lobby,
                     input.PathParameters[lobbyMethodKey],
                     input.Body);
+                return WrapResponse(lobbyResp);
             }
             catch (Exception ex)
             {
@@ -82,21 +83,26 @@ namespace Io.Autometa.Lobby.Server
                 // don't leak a stack trace
                 vc.reason.Add(ex.GetType().Name + ": " + ex.Message);
                 Console.WriteLine(JsonConvert.SerializeObject(ex));
-                mappedResponse = vc;
+                return WrapResponse(vc, HttpStatusCode.Redirect);
             }
 
-            return WrapResponse(mappedResponse);
+            return WrapResponse("oops", HttpStatusCode.Redirect);
         }
 
         // Ensure all responses are in the correct format
         private static APIGatewayProxyResponse WrapResponse(
-            object toSerialize)
+            object toSerialize,
+            HttpStatusCode code = HttpStatusCode.OK)
         {
             return new APIGatewayProxyResponse
             {
-                StatusCode = (int)HttpStatusCode.OK,
+                StatusCode = (int)code,
                 Body = Newtonsoft.Json.JsonConvert.SerializeObject(toSerialize),
-                Headers = new Dictionary<string, string> { { "Content-Type", "application/json" }, { "Access-Control-Allow-Origin", "*" } }
+                Headers = new Dictionary<string, string> {
+                    { "Content-Type", "application/json" },
+                    { "Access-Control-Allow-Origin", "*" },
+                    { "Location", redirect}
+                    }
             };
         }
 
