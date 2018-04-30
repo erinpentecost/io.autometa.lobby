@@ -25,9 +25,16 @@ namespace Io.Autometa.Lobby.Contract
             }
         }
 
-        public string GenerateID()
+        public string GenerateID(string lobbyShortID = null)
         {
-            return this.gid + "-" + IdGenerator.GetId();
+            if (string.IsNullOrWhiteSpace(lobbyShortID))
+            {
+                return this.gid + "-" + IdGenerator.GetId();
+            }
+            else
+            {
+                return this.gid + "-" + lobbyShortID;
+            }
         }
 
         public ValidationCheck Validate()
