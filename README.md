@@ -44,7 +44,7 @@ curl -H "Content-Type: application/json" -X POST -d '{"id":"LocalRedisTest","api
 Lobbies will expire 5 minutes after the last call to *Create*, *Join*, *Leave*, or *Read*. Expiration can be forced if a lobby owner calls *Leave* on themselves. Expiration can be post-poned if the host periodically calls *Read* to get the most recent state.
 
 ## Lazy/Asynchronous/Promiscuous Mode
-You don't have to use the lobby as intended if your game does require a simultaneous start (that is, you want to allow people to drop in and out and it's no problem). In that case, you can design matchmaking like the following:
+You don't have to use the lobby as intended if your game does not require a simultaneous start (that is, you want to allow people to drop in and out and it's no problem). In that case, you can design matchmaking like the following:
 1. Call *Search* to find any already-existing games. Randomly select one and just start communicating to the host's IP and Port directly.
 2. If there are no already-existing games, call Create to start a new game. Every 5 or more minutes, call Create again to make a new lobby.
 This uses the lobby system just as a lighweight discovery address book, and that's ok.
