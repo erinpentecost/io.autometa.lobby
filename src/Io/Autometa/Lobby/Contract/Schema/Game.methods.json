@@ -2,7 +2,9 @@
   {
     "Name": "GenerateID",
     "Return": "String",
-    "Input": []
+    "Input": [
+      "String"
+    ]
   },
   {
     "Name": "Validate",

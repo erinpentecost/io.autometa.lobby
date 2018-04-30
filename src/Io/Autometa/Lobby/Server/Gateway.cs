@@ -28,8 +28,6 @@ namespace Io.Autometa.Lobby.Server
         [LambdaSerializer(typeof(Amazon.Lambda.Serialization.Json.JsonSerializer))]
         public object FunctionHandler(APIGatewayProxyRequest input, ILambdaContext context)
         {
-            //https://mynkc1sp17.execute-api.us-west-2.amazonaws.com/lobby/lobby
-
             object mappedResponse = null;
 
             try
@@ -103,7 +101,7 @@ namespace Io.Autometa.Lobby.Server
         }
 
         /// <summary>
-        /// Super basic path router
+        /// Super basic path router based on reflection
         /// </summary>
         /// <param name="lobby">lobby instance to use</param>
         /// <param name="param">method to call on ILobby</param>

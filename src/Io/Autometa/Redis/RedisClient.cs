@@ -7,6 +7,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Io.Autometa.Redis
 {
+    /// <summary>
+    /// This class is not thread-safe, and the methods it exposes are
+    /// not re-entrant.
+    /// </summary>
     public class RedisClient : IDisposable, IRedisCommandReceiver
     {
         internal RedisConnection con {get;}
@@ -154,8 +158,13 @@ namespace Io.Autometa.Redis
             return result;
         }
 
+        /// <summary>
         /// You will probably want to flatten this output.
         /// It's just situated like this so the enum can be quit without breaking everything else.
+        /// </summary>
+        /// <param name="cmd">SCAN-type command to use</param>
+        /// <param name="match">pattern to match</param>
+        /// <returns></returns>
         public IEnumerable<List<string>> Scan(RedisCommand cmd = RedisCommand.SCAN, string match = null)
         {
             long cursor = 0;
@@ -192,30 +201,19 @@ namespace Io.Autometa.Redis
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
+                    // dispose managed state (managed objects).
                     this.con.Dispose();
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.
-                // TODO: set large fields to null.
 
                 disposedValue = true;
             }
         }
-
-        // TODO: override a finalizer only if Dispose(bool disposing) above has code to free unmanaged resources.
-        // ~RedisClient() {
-        //   // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //   Dispose(false);
-        // }
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
             Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
         }
         #endregion
 

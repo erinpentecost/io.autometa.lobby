@@ -64,8 +64,12 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 gl.host.ip = this.userIp; // override user-supplied ip
                 gl.gameType = newLobby.gameType;
                 gl.hidden = newLobby.hidden;
+                // The lobbyID is very much a magic string, and care
+                // should be taken if you mess with it.
+                // Redis search methods depend on it being a certain
+                // format: "gameType-[$]shortId"
                 gl.lobbyID = newLobby.gameType.GenerateID()
-                    + (gl.hidden ? "$" : string.Empty); // dumb magic character
+                    + (gl.hidden ? "$" : string.Empty);
                 
                 gl.metaData = newLobby.metaData;
 
@@ -201,7 +205,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             using (var r = new RedisClient(this.opt))
             {
                 // get keys
-                foreach (var searchRes in r.Scan(RedisCommand.SCAN, game.gid + "*[^$]"))
+                foreach (var searchRes in r.Scan(RedisCommand.SCAN, game.gid + "-*[^$]"))
                 {
                     foreach (var key in searchRes)
                     {
