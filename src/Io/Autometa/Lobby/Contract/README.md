@@ -49,3 +49,5 @@ You don't have to use the lobby as intended if your game does not require a simu
 2. If there are no already-existing games, call Create to start a new game. Every 5 or more minutes, call Create again to make a new lobby.
 This uses the lobby system just as a lighweight discovery address book, and that's ok.
 
+## Quicker Game Starts
+Polling the lobby service every minute or so by the host is still pretty slow. You should set up game clients sucn that they call *Join* on the lobby service and follow it up with a notification push to the lobby owner. This tests the peer-to-peer connection, and you can use it to get fast feedback on lobby state changes. Autometa.io lobby does not support push notifications, so this is really the only way to go about it.
