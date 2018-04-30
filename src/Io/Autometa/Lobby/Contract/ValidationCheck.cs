@@ -134,7 +134,7 @@ namespace Io.Autometa.Lobby.Contract
             }
             if (strToCheck.Length > maxStr)
             {
-                return new ValidationCheck(false, prefix+"too long ("+strToCheck.Length+"/"+maxStr+")");
+                return new ValidationCheck(false, prefix+"too long ("+strToCheck?.Length+"/"+maxStr+")");
             }
 
             if (strToCheck.IndexOfAny(illegal) != -1)

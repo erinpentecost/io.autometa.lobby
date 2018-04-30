@@ -41,9 +41,9 @@ namespace Io.Autometa.Lobby.Server
                     .Assert(() => !string.IsNullOrWhiteSpace(input.HttpMethod), "http method not supplied")
                     .Assert(() => string.Equals(input.HttpMethod, "post", StringComparison.InvariantCultureIgnoreCase), "only POST method is allowed")
                     .Assert(() => input.Headers.ContainsKey("Content-Type"), "Content-Type header is missing")
-                    .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json");
-                ivc.Assert(() => !string.IsNullOrWhiteSpace(input.Body), "body is null")
-                    .Assert(() => input.Body.Length <= maxBody, "body length is too long (" + input.Body.Length + "/" + maxBody.ToString() + ")")
+                    .Assert(() => string.Equals(input.Headers["Content-Type"], @"application/json", StringComparison.InvariantCultureIgnoreCase), "Content-Type header should be application/json")
+                    .Assert(() => !string.IsNullOrWhiteSpace(input.Body), "body is null")
+                    .Assert(() => input?.Body?.Length <= maxBody, "body length is too long (" + input?.Body?.Length + "/" + maxBody.ToString() + ")")
                     .Assert(() => input.PathParameters != null, "path parameters are null")
                     .Assert(() => input.PathParameters.ContainsKey(lobbyMethodKey), "expecting path key (" + lobbyMethodKey + ")")
                     .Assert(() => !string.IsNullOrWhiteSpace(input.PathParameters[lobbyMethodKey]), "path key is empty (" + lobbyMethodKey + ")")
