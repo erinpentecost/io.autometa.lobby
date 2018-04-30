@@ -11,7 +11,7 @@ namespace Io.Autometa.Lobby.Server
 {
     public class RedisLobby : ILobby
     {
-        private static string ExpirationTimeSec = 600.ToString();
+        private static string ExpirationTimeSec = 300.ToString();
         private static int maxLobbySize = 30;
 
         // It can actually be a little over this, depends on how big
