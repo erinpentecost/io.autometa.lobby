@@ -50,8 +50,6 @@ namespace Io.Autometa.Lobby.Tests
                 var resp2 = r.Send(pipe2);
                 Assert.Equal(null, resp2[1]);
             }
-
-            
         }
 
         /// Does happy-path check versus a real redis instance

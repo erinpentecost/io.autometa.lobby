@@ -82,6 +82,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 GameLobby gl = new GameLobby();
                 gl.clients = new List<Client>();
                 gl.creationTime = DateTime.UtcNow;
+                gl.host = new Client();
                 gl.host.port = port;
                 gl.host.nickName = name;
                 gl.host.ip = ip;
@@ -160,9 +161,6 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 sw.Start();
                 var resp = r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
                 this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
-
-                var rvc = new ValidationCheck()
-                    .Assert(resp[1] != null, "lobby "+gl.lobbyID+" does not exist");
 
                 if (resp[1] == null)
                 {
