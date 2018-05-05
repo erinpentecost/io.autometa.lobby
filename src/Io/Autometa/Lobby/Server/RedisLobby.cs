@@ -39,17 +39,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
         // format: "gameType-[$]shortId"
         private string CreateKey(string gameType, string lobbyID)
         {
-            return gameType + "-" + lobbyID;
-        }
-        private void SplitKey(string key, out string gameType, out string lobbyID)
-        {
-            var split = key.Split('-');
-            if (split.Length != 2)
-            {
-                throw new ArgumentException("bad format", nameof(key));
-            }
-            gameType = split[0];
-            lobbyID = split[1];
+            return (gameType + "-" + lobbyID).ToUpperInvariant();
         }
 
         public RedisLobby(string connectionAddress, Func<string, long, bool> publishTimingStats=null)
@@ -77,6 +67,9 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 .Assert(port > 1024, nameof(port) + " is privileged")
                 .Throw();
 
+            gameType = gameType.ToUpperInvariant().Trim();
+            ip = ip.ToUpperInvariant().Trim();
+
             using (var r = new RedisClient(this.opt))
             {
                 GameLobby gl = new GameLobby();
@@ -84,7 +77,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 gl.creationTime = DateTime.UtcNow;
                 gl.host = new Client();
                 gl.host.port = port;
-                gl.host.nickName = name;
+                gl.host.name = name;
                 gl.host.ip = ip;
                 gl.gameType = gameType;
                 gl.hidden = hidden;
@@ -127,10 +120,13 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 .Assert(ValidationCheck.BasicStringCheck(ip, nameof(ip)))
                 .Assert(port > 1024, nameof(port) + " is privileged")
                 .Throw();
+            
+            gameType = gameType.ToUpperInvariant();
+            lobbyId = lobbyId.ToUpperInvariant();
 
             Client client = new Client();
             client.port = port;
-            client.nickName = name;
+            client.name = name;
             client.ip = ip;
 
             string lobbyKey = CreateKey(gameType, lobbyId);
@@ -159,10 +155,10 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 gl.clients.Add(client);
 
                 sw.Start();
-                var resp = r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                var resp = r.Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
                 this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
-                if (resp[1] == null)
+                if (resp == null)
                 {
                     throw new LobbyException(404, "lobby no longer exists");
                 }
@@ -179,6 +175,9 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 .Assert(ValidationCheck.BasicStringCheck(kickIp, nameof(kickIp)))
                 .Assert(ValidationCheck.BasicStringCheck(hostIp, nameof(hostIp)))
                 .Throw();
+            
+            gameType = gameType.ToUpperInvariant();
+            lobbyId = lobbyId.ToUpperInvariant();
 
             // unlike other methods, the Host can force a different user to Leave
             string lobbyKey = CreateKey(gameType, lobbyId);
@@ -205,7 +204,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 if ((gl.host.ip == hostIp) && (kickIp == hostIp))
                 {
                     sw.Start();
-                    r.Send(RedisCommand.DEL, gl.lobbyID);
+                    r.Send(RedisCommand.DEL, lobbyKey);
                     sw.Stop();
                 }
 
@@ -215,10 +214,10 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                     gl.clients.RemoveAll(c => c.ip == kickIp);
 
                     sw.Start();
-                    var resp = r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                    var resp = r.Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
                     sw.Stop();
 
-                    if (resp[1] == null)
+                    if (resp == null)
                     {
                         throw new LobbyException(404, "lobby no longer exists");
                     }
@@ -247,6 +246,8 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             new ValidationCheck()
                 .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
                 .Throw();
+
+            gameType = gameType.ToUpperInvariant();
 
             Func<Dictionary<string, string>, bool> matches = (d) => true;
             if (!string.IsNullOrWhiteSpace(metaKey))

@@ -16,13 +16,12 @@ namespace Io.Autometa.Lobby.Tests
     public class LocalRedisTest
     {
         RedisLobby r;
-        private string gameType;
+        Random rand = new Random();
 
         public LocalRedisTest()
         {
-            Random r = new Random();
+            
             this.r = new RedisLobby("localhost:6379");
-            this.gameType = nameof(LocalRedisTest) + r.Next(0,100);
         }
 
         [Fact]
@@ -52,11 +51,35 @@ namespace Io.Autometa.Lobby.Tests
             }
         }
 
+        [Fact]
+        public void HostTwoTest()
+        {
+            var gameType = nameof(HostTwoTest) + rand.Next(0,100);
+
+            // Create test lobby
+            var createResp1 = this.r.Create(gameType, "localhost", 6969, "host1", false, null);
+
+            // Find the lobby
+            var searchResp1 = this.r.Search(gameType);
+            Assert.Equal(1, searchResp1.Count);
+            Assert.Equal(createResp1.lobbyID, searchResp1[0].lobbyID);
+
+            // Create another one
+            var createResp2 = this.r.Create(gameType, "localhost", 9696, "host2", false, null);
+
+            // Find the lobby
+            var searchResp2 = this.r.Search(gameType);
+            Assert.Equal(1, searchResp2.Count);
+            Assert.Equal(createResp1.lobbyID, searchResp2[0].lobbyID);
+        }
+
         /// Does happy-path check versus a real redis instance
         /// running on the localhost with default port.
         [Fact]
         public void IntegrationTest()
         {
+            var gameType = nameof(IntegrationTest) + rand.Next(0,100);
+
             // Create test lobby
             var createResp = this.r.Create(gameType, "localhost", 6969, "host", false, null);
 
@@ -76,8 +99,8 @@ namespace Io.Autometa.Lobby.Tests
             var jClient = new Server.Contract.Client();
             jClient.ip = "127.0.0.1";
             jClient.port = 9000;
-            jClient.nickName = "name";
-            var joinResp = this.r.Join(gameType, createResp.lobbyID, jClient.ip, jClient.port, jClient.nickName);
+            jClient.name = "name";
+            var joinResp = this.r.Join(gameType, createResp.lobbyID, jClient.ip, jClient.port, jClient.name);
 
             // Read it again and verify we are in now
             var readResp2 = this.r.Read(gameType, createResp.lobbyID);
@@ -91,7 +114,7 @@ namespace Io.Autometa.Lobby.Tests
 
             // Leave the lobby
             var leaveResp = this.r.Leave(gameType, createResp.lobbyID, jClient.ip, jClient.ip);
-            Assert.True(readResp2.clients.Count == 0);
+            Assert.True(leaveResp.clients.Count == 0);
 
             // Host leaves the lobby
             var closeLobbyResp = this.r.Leave(gameType, createResp.lobbyID, createResp.host.ip, createResp.host.ip);

@@ -27,7 +27,7 @@ namespace Io.Autometa.Lobby.Server.Contract
         /// </summary>
         /// <returns></returns>
         [DataMember]
-        public string nickName {get; set;}
+        public string name {get; set;}
 
         /// <summary>
         /// User unique id based on ip + port.
