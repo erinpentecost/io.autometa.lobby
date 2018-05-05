@@ -18,6 +18,8 @@ namespace Io.Autometa.Lobby.Server
         // the batch result from Redis is.
         private static int maxSearchReturnSize = 100;
 
+        private const string redisCategory = "redis";
+
         private Func<string, long, bool> publishTimingStats = (n,d) => (true);
 
         private RedisOptions opt { get; set; }
@@ -101,7 +103,10 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                     // actually create the lobby
                     .Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "NX", "EX", ExpirationTimeSec);
 
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var resp = r.Send(pipe);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
                 if (resp[1] == null)
                 {
@@ -131,24 +136,30 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
             using (var r = new RedisClient(this.opt))
             {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var foundGame = r.Send(RedisCommand.GET, lobbyKey);
+                sw.Stop();
+
                 if (foundGame == null)
                 {
                     throw new LobbyException(404, "lobby does not exist");
                 }
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
-                var blc = new ValidationCheck()
+                new ValidationCheck()
                     .Assert(gl.host.uid != client.uid, "host can't join her own game")
                     .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
                     .Assert(gl.gameType == gameType, "lobby id changed")
                     .Assert(gl.lobbyID == lobbyId, "lobby id changed")
-                    .Assert(gl.clients.Count <= maxLobbySize, "lobby is full (" + maxLobbySize + ")");
-                blc.Throw();
+                    .Assert(gl.clients.Count <= maxLobbySize, "lobby is full (" + maxLobbySize + ")")
+                    .Throw();
 
                 gl.clients.Add(client);
 
+                sw.Start();
                 var resp = r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
                 var rvc = new ValidationCheck()
                     .Assert(resp[1] != null, "lobby "+gl.lobbyID+" does not exist");
@@ -176,7 +187,11 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
             using (var r = new RedisClient(this.opt))
             {
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var foundGame = r.Send(RedisCommand.GET, lobbyKey);
+                sw.Stop();
+
                 if (foundGame == null)
                 {
                     throw new LobbyException(404, "lobby does not exist");
@@ -191,7 +206,9 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 // Caller is the host and is leaving their own game
                 if ((gl.host.ip == hostIp) && (kickIp == hostIp))
                 {
+                    sw.Start();
                     r.Send(RedisCommand.DEL, gl.lobbyID);
+                    sw.Stop();
                 }
 
                 // Host is kicking someone or someone volunteered to leave
@@ -199,7 +216,9 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 {
                     gl.clients.RemoveAll(c => c.ip == kickIp);
 
+                    sw.Start();
                     var resp = r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                    sw.Stop();
 
                     if (resp[1] == null)
                     {
@@ -210,6 +229,8 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 {
                     throw new LobbyException(403, "only the host can kick other users");
                 }
+
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
                 return gl;
             }
@@ -247,6 +268,8 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             using (var r = new RedisClient(this.opt))
             {
                 // get keys
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 foreach (var searchRes in r.Scan(RedisCommand.SCAN, gameType + "-*[^" + SecretPrefix.ToString() + "]"))
                 {
                     foreach (var key in searchRes)
@@ -264,9 +287,12 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                         break;
                     }
                 }
-
+                
                 // get lobby data
-                foreach (var lobby in r.Send(pipe))
+                var readDetails = r.Send(pipe);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
+
+                foreach (var lobby in readDetails)
                 {
                     string lobbyStr = Encoding.UTF8.GetString(lobby);
                     GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
@@ -306,7 +332,10 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                     .Send(RedisCommand.GET, lobbyKey)
                     .Send(RedisCommand.EXPIRE, lobbyKey);
 
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var foundGame = r.Send(p);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
                 if (foundGame[0] == null)
                 {
