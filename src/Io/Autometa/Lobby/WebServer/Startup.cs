@@ -29,26 +29,24 @@ namespace Io.Autometa.Lobby.WebServer
         // This method gets called by the runtime. Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddServerTiming();
+
             // TODO: Swap with services.AddMvcCore().AddApiExplorer();
             services.AddMvc();
 
             // Add S3 to the ASP.NET Core dependency injection framework.
             services.AddAWSService<Amazon.S3.IAmazonS3>();
 
-            services.AddServerTiming();
-
             // Add Swagger
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc(ApiVersion, new Info { Title = ApiTitle, Version = ApiVersion });
+                c.SwaggerDoc("swagger", new Info { Title = ApiTitle, Version = ApiVersion });
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            app.UseMvc();
-
             // Accept forwarded-IP headers. This allows functionality
             // for users behind NAT, but will also allow for IP spoofing.
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -56,6 +54,8 @@ namespace Io.Autometa.Lobby.WebServer
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor |
                 ForwardedHeaders.XForwardedProto
             });
+
+            app.UseMvc();
 
             // Expose swagger middleware for development
             app.UseSwagger();

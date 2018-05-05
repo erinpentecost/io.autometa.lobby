@@ -20,7 +20,7 @@ namespace Io.Autometa.Lobby.Server
 
         private const string redisCategory = "redis";
 
-        private Func<string, long, bool> publishTimingStats = (n,d) => (true);
+        private Func<string, long, bool> publishTimingStats;
 
         private RedisOptions opt { get; set; }
 
@@ -52,7 +52,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             lobbyID = split[1];
         }
 
-        public RedisLobby(string connectionAddress, Func<string, long, bool> publishTimingStats)
+        public RedisLobby(string connectionAddress, Func<string, long, bool> publishTimingStats=null)
         {
             if (string.IsNullOrEmpty(connectionAddress))
             {
@@ -64,7 +64,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
             this.opt.Host = splitUp[0];
             this.opt.Port = int.Parse(splitUp[1]);
 
-            this.publishTimingStats = publishTimingStats;
+            this.publishTimingStats = publishTimingStats ?? new Func<string, long, bool>((n,d) => (true));
         }
 
 
