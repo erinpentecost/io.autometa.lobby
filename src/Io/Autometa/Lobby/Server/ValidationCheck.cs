@@ -3,16 +3,15 @@ using System.Collections.Generic;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace Io.Autometa.Lobby.Contract
+namespace Io.Autometa.Lobby.Server
 {
     /// This provides a method of validating messages without
     /// being super verbose for each message.
     /// It's also a message itself, which you can use to send
     /// success or error criteria back to clients.
     [DataContract]
-    public class ValidationCheck : IMessage
+    public class ValidationCheck
     {
-        [DataMember]
         public bool result {get;set;}
 
         [DataMember]
@@ -36,6 +35,14 @@ namespace Io.Autometa.Lobby.Contract
         {
             this.result = true;
             this.reason = new List<object>();
+        }
+
+        public void Throw(int code=400)
+        {
+            if (!this.result)
+            {
+                throw new LobbyException(code, this.ToString());
+            }
         }
 
         public ValidationCheck Assert(bool result, string reason)
@@ -142,11 +149,6 @@ namespace Io.Autometa.Lobby.Contract
                 return new ValidationCheck(false, prefix+"illegal characters ("+string.Join(" ",illegal)+")");
             }
 
-            return new ValidationCheck();
-        }
-
-        public ValidationCheck Validate()
-        {
             return new ValidationCheck();
         }
 

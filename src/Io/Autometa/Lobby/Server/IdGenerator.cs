@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Io.Autometa.Lobby.Contract
+namespace Io.Autometa.Lobby.Server
 {
     static class IdGenerator
     {
         // Intentionally no ILO0. They can be confused with one-another.
-        private static string allowedChars = "QWFPGJUYARSTDHNEZXCVBKM123456789";
+        // Intentionally no S either, since that is used for the secret prefix
+        private static string allowedChars = "QWFPGJUYARTDHNEZXCVBKM123456789";
 
         private static Random random = new Random();
         
@@ -15,13 +16,11 @@ namespace Io.Autometa.Lobby.Contract
             return allowedChars[random.Next(0, allowedChars.Length)];
         }
 
-        public static string GetId()
+        public static string GetId(bool hidden)
         {
-            // 3355443233554432 possible combinations. I'm not going to worry about
-            // hash id collisions.
             char[] id = new char[]
             {
-                GetChar(),
+                hidden ? RedisLobby.SecretPrefix : GetChar(),
                 GetChar(),
                 GetChar(),
                 GetChar(),

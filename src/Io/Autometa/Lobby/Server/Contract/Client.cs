@@ -1,11 +1,11 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Contract
+namespace Io.Autometa.Lobby.Server.Contract
 {
     /// This is an instance of a game that a user is running.
     [DataContract]
-    public class Client : IMessage
+    public class Client
     {
         /// <summary>
         /// IP address for the game client.

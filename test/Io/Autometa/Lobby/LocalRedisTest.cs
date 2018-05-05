@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using System.IO;
 using Io.Autometa.Schema;
 using Io.Autometa.Lobby.Server;
+using Io.Autometa.Redis;
 
 namespace Io.Autometa.Lobby.Tests
 {
@@ -33,6 +34,35 @@ namespace Io.Autometa.Lobby.Tests
         private static void DumpExample<T>(T example)
         {
             File.WriteAllText(Path.Combine(exeDir, typeof(T).GetFriendlyName() +".sample.json"), JsonConvert.SerializeObject(example));
+        }
+
+        [Fact]
+        public void SetTest()
+        {
+            RedisOptions opt = new RedisOptions("localhost", 6379);
+            using (var r = new RedisClient(opt))
+            {
+                var pipe1 = new RedisPipeline()
+                    // only allow one game to be hosted per IP address
+                    .Send(RedisCommand.GET, "derp")
+                    // actually create the lobby
+                    .Send(RedisCommand.SET, "derp", "hi", "NX", "EX", "900");
+
+                var resp1 = r.Send(pipe1);
+                Assert.NotEqual(null, resp1[1]);
+
+
+                var pipe2 = new RedisPipeline()
+                    // only allow one game to be hosted per IP address
+                    .Send(RedisCommand.GET, "derp")
+                    // actually create the lobby
+                    .Send(RedisCommand.SET, "derp", "bye ", "NX", "EX", "900");
+
+                var resp2 = r.Send(pipe2);
+                Assert.Equal(null, resp2[1]);
+            }
+
+            
         }
 
         /// Does happy-path check versus a real redis instance

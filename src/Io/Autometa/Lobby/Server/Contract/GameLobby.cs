@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 
-namespace Io.Autometa.Lobby.Contract
+namespace Io.Autometa.Lobby.Server.Contract
 {
     /// This is an instance of an actual game lobby.
     [DataContract]
-    public class GameLobby : IMessage
+    public class GameLobby
     {
         private static int maxMetaDataCount = 100;
 
@@ -16,7 +16,7 @@ namespace Io.Autometa.Lobby.Contract
         public string lobbyID {get; set;}
 
         [DataMember]
-        public Game gameType {get; set;}
+        public string gameType {get; set;}
 
         [DataMember]
         public Client host {get; set;}
