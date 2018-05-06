@@ -15,6 +15,7 @@ using Io.Autometa.Lobby.Server.Contract;
 
 namespace Io.Autometa.Lobby.WebServer.Controllers
 {
+    [Route("api")]
     public class LobbyController : Controller
     {
         private IHttpContextAccessor contextAccessor;
@@ -75,7 +76,7 @@ namespace Io.Autometa.Lobby.WebServer.Controllers
             return lobby.Leave(gameType, lobbyId, ip, context.Connection.RemoteIpAddress.ToString());
         }
 
-        [HttpDelete("{gameType}/{lobbyId}")]
+        [HttpPut("{gameType}/{lobbyId}")]
         public GameLobby Join(string gameType, string lobbyId, [FromBody]JoinMessage body)
         {
             return lobby.Join(
