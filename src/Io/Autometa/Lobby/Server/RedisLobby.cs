@@ -20,6 +20,9 @@ namespace Io.Autometa.Lobby.Server
 
         private const string redisCategory = "redis";
 
+        private const string lobbyPrefix = "LOBBY/";
+        private const string hostPrefix = "HOST/";
+
         private Func<string, long, bool> publishTimingStats;
 
         private RedisOptions opt { get; set; }
@@ -45,7 +48,7 @@ return setres";
         // format: "gameType-[$]shortId"
         private string CreateKey(string gameType, string lobbyID)
         {
-            return (gameType + "-" + lobbyID).ToUpperInvariant();
+            return (lobbyPrefix + gameType + "-" + lobbyID).ToUpperInvariant();
         }
 
         public RedisLobby(string connectionAddress, Func<string, long, bool> publishTimingStats=null)
@@ -91,15 +94,15 @@ return setres";
                 // should be taken if you mess with it.
                 // Redis search methods depend on it being a certain
                 // format: "gameType-[s]shortId"
-                gl.lobbyID = IdGenerator.GetId(hidden);
+                gl.lobbyId = IdGenerator.GetId(hidden);
 
                 gl.metaData = meta ?? new Dictionary<string, string>();
 
-                string lobbyKey = CreateKey(gl.gameType, gl.lobbyID);
+                string lobbyKey = CreateKey(gl.gameType, gl.lobbyId);
 
                 var pipe = new RedisPipeline()
                     // only allow one game to be hosted per IP address
-                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host-" + gl.host.ip, lobbyKey)
+                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", hostPrefix + gl.host.ip, lobbyKey)
                     // actually create the lobby
                     .Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "NX", "EX", ExpirationTimeSec);
 
@@ -153,8 +156,9 @@ return setres";
                 new ValidationCheck()
                     .Assert(gl.host.uid != client.uid, "host can't join her own game")
                     .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
-                    .Assert(gl.gameType == gameType, "lobby id changed")
-                    .Assert(gl.lobbyID == lobbyId, "lobby id changed")
+                    .Assert(gl.clients.All(c => c.name != client.name), "must provide a unique name")
+                    .Assert(gl.gameType == gameType, "lobby type changed")
+                    .Assert(gl.lobbyId == lobbyId, "lobby id changed")
                     .Assert(gl.clients.Count <= maxLobbySize, "lobby is full (" + maxLobbySize + ")")
                     .Throw();
 
@@ -173,19 +177,13 @@ return setres";
             }
         }
 
-        public GameLobby Leave(string gameType, string lobbyId, string kickIp, string hostIp)
+        public GameLobby Leave(string gameType, string lobbyId, string callingIp, string kickName=null)
         {
-            // if kickip is null, assume it is the caller
-            if (string.IsNullOrWhiteSpace(kickIp))
-            {
-                kickIp = hostIp;
-            }
-
             new ValidationCheck()
                 .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
                 .Assert(ValidationCheck.BasicStringCheck(lobbyId, nameof(lobbyId)))
-                .Assert(ValidationCheck.BasicStringCheck(kickIp, nameof(kickIp)))
-                .Assert(ValidationCheck.BasicStringCheck(hostIp, nameof(hostIp)))
+                .Assert(ValidationCheck.BasicStringCheck(kickName, nameof(kickName)))
+                .Assert(ValidationCheck.BasicStringCheck(callingIp, nameof(callingIp)))
                 .Throw();
             
             gameType = gameType.ToUpperInvariant();
@@ -208,22 +206,40 @@ return setres";
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
                 new ValidationCheck()
-                    .Assert(gl.lobbyID == lobbyId, "lobby id changed")
+                    .Assert(gl.lobbyId == lobbyId, "lobby id changed")
                     .Assert(gl.gameType == gameType, "gametype changed")
                     .Throw();
 
+                // Determine the client of the caller
+                Client caller = gl.clients
+                    .Concat(new Client[]{gl.host})
+                    .First(c => string.Equals(c.ip, callingIp, StringComparison.InvariantCultureIgnoreCase));
+
+                // Determine who is being kicked. If kickName is null, assume the caller is leaving.
+                Client kickee = caller;
+                if (!string.IsNullOrWhiteSpace(kickName))
+                {
+                    kickee = gl.clients
+                        .Concat(new Client[]{gl.host})
+                        .FirstOrDefault(c => string.Equals(c.name, kickName, StringComparison.InvariantCultureIgnoreCase));
+                }
+
+                new ValidationCheck()
+                    .Assert(caller != null, "caller must be in the client list")
+                    .Assert(kickee != null, "client to kick must be in the client list")
+                    .Throw();
+
                 // Caller is the host and is leaving their own game
-                if ((gl.host.ip == hostIp) && (kickIp == hostIp))
+                if ((gl.host == caller) && (gl.host == kickee))
                 {
                     sw.Start();
                     r.Send(RedisCommand.DEL, lobbyKey);
                     sw.Stop();
                 }
-
                 // Host is kicking someone or someone volunteered to leave
-                else if ((gl.host.ip == hostIp) || (kickIp == hostIp))
+                else if ((gl.host == caller) || (kickee == caller))
                 {
-                    gl.clients.RemoveAll(c => c.ip == kickIp);
+                    gl.clients.RemoveAll(c => string.Equals(c.name, kickName, StringComparison.InvariantCultureIgnoreCase));
 
                     sw.Start();
                     var resp = r.Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
@@ -261,9 +277,19 @@ return setres";
 
             gameType = gameType.ToUpperInvariant();
 
+            // As it stands now, this search method will not scale well when there are many instances
+            // of lobbies for the same game. maxSearchReturnSize*keyMult games are pulled first,
+            // and then those are filtered by metaKey and metaValue. If none of those games in that
+            // first scan match, then no games will be returned.
+            // If this ever becomes a problem, I could create additional keys for metadata
+            // inside Redis and use pattern matching SCAN on those keys. This just opens me up
+            // to requiring a much larger redis instance, though, unless I want to further restrict
+            // metaData.
+            int keyMult = 1;
             Func<Dictionary<string, string>, bool> matches = (d) => true;
             if (!string.IsNullOrWhiteSpace(metaKey))
             {
+                keyMult = 10;
                 if (!string.IsNullOrWhiteSpace(metaValue))
                 {
                     matches = (d) => d != null && d.ContainsKey(metaKey) && string.Equals(d[metaKey], metaValue);
@@ -278,22 +304,22 @@ return setres";
             RedisPipeline pipe = new RedisPipeline();
             using (var r = new RedisClient(this.opt))
             {
-                // get keys
+                // get initial set of keys
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                foreach (var searchRes in r.Scan(RedisCommand.SCAN, gameType + "-[^" + SecretPrefix.ToString() + "]*"))
+                foreach (var searchRes in r.Scan(RedisCommand.SCAN, lobbyPrefix + gameType + "-[^" + SecretPrefix.ToString() + "]*"))
                 {
                     foreach (var key in searchRes)
                     {
                         // build up messages to get more data
                         pipe.Send(RedisCommand.GET, key);
 
-                        if (pipe.Length >= maxSearchReturnSize*10)
+                        if (pipe.Length >= maxSearchReturnSize*keyMult)
                         {
                             break;
                         }
                     }
-                    if (pipe.Length >= maxSearchReturnSize*10)
+                    if (pipe.Length >= maxSearchReturnSize*keyMult)
                     {
                         break;
                     }

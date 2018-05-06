@@ -64,7 +64,7 @@ namespace Io.Autometa.Lobby.Tests
             // Find the lobby
             var searchResp1 = this.r.Search(gameType);
             Assert.Equal(1, searchResp1.Count);
-            Assert.Equal(createResp1.lobbyID, searchResp1[0].lobbyID);
+            Assert.Equal(createResp1.lobbyId, searchResp1[0].lobbyId);
 
             // Create another one
             var createResp2 = this.r.Create(gameType, "localhost", 9696, "host2", false, null);
@@ -72,7 +72,7 @@ namespace Io.Autometa.Lobby.Tests
             // Find the lobby
             var searchResp2 = this.r.Search(gameType);
             Assert.Equal(1, searchResp2.Count);
-            Assert.Equal(createResp2.lobbyID, searchResp2[0].lobbyID);
+            Assert.Equal(createResp2.lobbyId, searchResp2[0].lobbyId);
         }
 
         [Fact]
@@ -96,7 +96,7 @@ namespace Io.Autometa.Lobby.Tests
 
             var searchResp2 = this.r.Search(gameType, "huh", "guh");
             Assert.Equal(1, searchResp2.Count);
-            Assert.Equal(createResp1.lobbyID, searchResp2[0].lobbyID);
+            Assert.Equal(createResp1.lobbyId, searchResp2[0].lobbyId);
 
             var searchResp3 = this.r.Search(gameType);
             Assert.Equal(3, searchResp3.Count);
@@ -104,7 +104,7 @@ namespace Io.Autometa.Lobby.Tests
 
             var searchResp4 = this.r.Search(gameType, "huh", "hahaha");
             Assert.Equal(1, searchResp4.Count);
-            Assert.Equal(createResp3.lobbyID, searchResp4[0].lobbyID);
+            Assert.Equal(createResp3.lobbyId, searchResp4[0].lobbyId);
         }
 
         /// Does happy-path check versus a real redis instance
@@ -121,10 +121,10 @@ namespace Io.Autometa.Lobby.Tests
             var searchResp1 = this.r.Search(gameType);
             Assert.True(searchResp1.Count > 0);
             Assert.True(searchResp1
-                .Any(lobby => lobby.lobbyID == createResp.lobbyID), "can't find lobby with id "+createResp.lobbyID);
+                .Any(lobby => lobby.lobbyId == createResp.lobbyId), "can't find lobby with id "+createResp.lobbyId);
 
             // Re-read the lobby
-            var readResp1 = this.r.Read(gameType, createResp.lobbyID);
+            var readResp1 = this.r.Read(gameType, createResp.lobbyId);
             Assert.Equal(
                 JsonConvert.SerializeObject(createResp),
                 JsonConvert.SerializeObject(readResp1));
@@ -134,10 +134,10 @@ namespace Io.Autometa.Lobby.Tests
             jClient.ip = "127.0.0.1";
             jClient.port = 9000;
             jClient.name = "name";
-            var joinResp = this.r.Join(gameType, createResp.lobbyID, jClient.ip, jClient.port, jClient.name);
+            var joinResp = this.r.Join(gameType, createResp.lobbyId, jClient.ip, jClient.port, jClient.name);
 
             // Read it again and verify we are in now
-            var readResp2 = this.r.Read(gameType, createResp.lobbyID);
+            var readResp2 = this.r.Read(gameType, createResp.lobbyId);
             Assert.NotEqual(
                 JsonConvert.SerializeObject(createResp),
                 JsonConvert.SerializeObject(readResp2));
@@ -147,17 +147,17 @@ namespace Io.Autometa.Lobby.Tests
                 JsonConvert.SerializeObject(readResp2.clients[0]));
 
             // Leave the lobby
-            var leaveResp = this.r.Leave(gameType, createResp.lobbyID, jClient.ip, jClient.ip);
+            var leaveResp = this.r.Leave(gameType, createResp.lobbyId, jClient.ip, jClient.name);
             Assert.True(leaveResp.clients.Count == 0);
 
             // Host leaves the lobby
-            var closeLobbyResp = this.r.Leave(gameType, createResp.lobbyID, createResp.host.ip, createResp.host.ip);
+            var closeLobbyResp = this.r.Leave(gameType, createResp.lobbyId, createResp.host.ip, createResp.host.name);
 
             // Re-read the lobby
             bool deleted = false;
             try
             {
-                this.r.Read(gameType, createResp.lobbyID);
+                this.r.Read(gameType, createResp.lobbyId);
             }
             catch
             {

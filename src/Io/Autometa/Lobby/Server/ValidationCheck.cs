@@ -18,7 +18,7 @@ namespace Io.Autometa.Lobby.Server
         public List<object> reason {get;set;}
 
         private const int maxStr = 69;
-        private static char[] illegal = "\\/\"'{}:;&".ToCharArray();
+        private static char[] illegal = "\\/\"'{}:;&\r\n\t".ToCharArray();
 
 
         public ValidationCheck(bool result, string reason)

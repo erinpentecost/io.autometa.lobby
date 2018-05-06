@@ -23,7 +23,7 @@ namespace Io.Autometa.Lobby.Server.Contract
 
         /// <summary>
         /// User-configurable nickname to identify the game client.
-        /// Lobby system ignores this, use it however you want.
+        /// This must be unique per lobby.
         /// </summary>
         /// <returns></returns>
         [DataMember]
