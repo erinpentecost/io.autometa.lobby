@@ -20,10 +20,13 @@
     <PackageReference Include="xunit" Version="2.3.1" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\Server\Io.Autometa.Lobby.Server.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Io\Autometa\Lobby\WebServer\Io.Autometa.Lobby.WebServer.csproj" />
   </ItemGroup>
 
 </Project>

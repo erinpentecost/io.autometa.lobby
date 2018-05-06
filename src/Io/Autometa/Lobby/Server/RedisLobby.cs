@@ -35,11 +35,9 @@ namespace Io.Autometa.Lobby.Server
         // on is not called out as a KEYS argument.
         private static string EnsureSingleLua =
 @"
-print(KEYS[2] .. ' -> ' .. KEYS[1] .. '...')
 local existingkey = redis.pcall(""GET"",KEYS[1])
 redis.pcall('DEL',existingkey)
 local setres = redis.call(""SETEX"",KEYS[1],""" + ExpirationTimeSec + @""",KEYS[2])
-print('... done')
 return setres";
 
         // The lobbyID is very much a magic string, and care

@@ -6,8 +6,15 @@ cd ./test/Io/Autometa/Redis
 sleep 3
 
 cd "${ROOTDIR}"
+cd ./src/Io/Autometa/Lobby/WebServer/bin/Debug/netcoreapp2.0/
+dotnet ./Io.Autometa.Lobby.WebServer.dll &
+KESTREL=$!
+
+cd "${ROOTDIR}"
 cd ./test/Io/Autometa/Lobby/
 dotnet xunit --fx-version 2.0.6
+
+kill ${KESTREL}
 
 cd "${ROOTDIR}"
 cd ./test/Io/Autometa/Redis
