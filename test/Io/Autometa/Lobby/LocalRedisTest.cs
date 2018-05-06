@@ -48,6 +48,8 @@ namespace Io.Autometa.Lobby.Tests
 
                 var resp2 = r.Send(pipe2);
                 Assert.Equal(null, resp2[1]);
+
+                r.Send(RedisCommand.DEL, "derp");
             }
         }
 
@@ -70,7 +72,39 @@ namespace Io.Autometa.Lobby.Tests
             // Find the lobby
             var searchResp2 = this.r.Search(gameType);
             Assert.Equal(1, searchResp2.Count);
+            Assert.Equal(createResp2.lobbyID, searchResp2[0].lobbyID);
+        }
+
+        [Fact]
+        public void SearchTest()
+        {
+            var gameType = nameof(SearchTest) + rand.Next(0,100);
+            Dictionary<string,string> metaData = new Dictionary<string, string>();
+            metaData.Add("duh", "buh");
+            metaData.Add("huh", "guh");
+
+            // Create test lobby
+            var createResp1 = this.r.Create(gameType, "localhost1", 6969, "host1", false, metaData);
+            var createResp2 = this.r.Create(gameType, "localhost2", 6969, "host1", true, metaData);
+            metaData["huh"] = "hahaha";
+            var createResp3 = this.r.Create(gameType, "localhost3", 6969, "host1", false, metaData);
+            var createResp4 = this.r.Create(gameType, "localhost4", 6969, "host1", false, null);
+
+            // Find the lobby
+            var searchResp1 = this.r.Search(gameType, "huh");
+            Assert.Equal(2, searchResp1.Count);
+
+            var searchResp2 = this.r.Search(gameType, "huh", "guh");
+            Assert.Equal(1, searchResp2.Count);
             Assert.Equal(createResp1.lobbyID, searchResp2[0].lobbyID);
+
+            var searchResp3 = this.r.Search(gameType);
+            Assert.Equal(3, searchResp3.Count);
+
+
+            var searchResp4 = this.r.Search(gameType, "huh", "hahaha");
+            Assert.Equal(1, searchResp4.Count);
+            Assert.Equal(createResp3.lobbyID, searchResp4[0].lobbyID);
         }
 
         /// Does happy-path check versus a real redis instance

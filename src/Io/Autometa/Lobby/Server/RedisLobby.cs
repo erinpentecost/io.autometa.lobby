@@ -28,10 +28,16 @@ namespace Io.Autometa.Lobby.Server
 
         // Ensure that only one instance of keys[2] exists, based on keys[1]
         // Note that SETEX may be deprecated at some point
+        // This is a "bad" redis script because one of the keys that is operated
+        // on is not called out as a KEYS argument.
         private static string EnsureSingleLua =
-@"redis.call(""DEL"",redis.call(""GET"",KEYS[1]))
-redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
-
+@"
+print(KEYS[2] .. ' -> ' .. KEYS[1] .. '...')
+local existingkey = redis.pcall(""GET"",KEYS[1])
+redis.pcall('DEL',existingkey)
+local setres = redis.call(""SETEX"",KEYS[1],""" + ExpirationTimeSec + @""",KEYS[2])
+print('... done')
+return setres";
 
         // The lobbyID is very much a magic string, and care
         // should be taken if you mess with it.
@@ -93,7 +99,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
 
                 var pipe = new RedisPipeline()
                     // only allow one game to be hosted per IP address
-                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host:" + gl.host.ip, lobbyKey)
+                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host-" + gl.host.ip, lobbyKey)
                     // actually create the lobby
                     .Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "NX", "EX", ExpirationTimeSec);
 
@@ -269,7 +275,7 @@ redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
                 // get keys
                 Stopwatch sw = new Stopwatch();
                 sw.Start();
-                foreach (var searchRes in r.Scan(RedisCommand.SCAN, gameType + "-*[^" + SecretPrefix.ToString() + "]"))
+                foreach (var searchRes in r.Scan(RedisCommand.SCAN, gameType + "-[^" + SecretPrefix.ToString() + "]*"))
                 {
                     foreach (var key in searchRes)
                     {
