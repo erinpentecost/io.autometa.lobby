@@ -13,7 +13,7 @@ namespace Io.Autometa.Lobby.Server.Contract
 
         /// Lobby id that the game client is currently in.
         [DataMember]
-        public string lobbyID {get; set;}
+        public string lobbyId {get; set;}
 
         [DataMember]
         public string gameType {get; set;}
@@ -44,7 +44,7 @@ namespace Io.Autometa.Lobby.Server.Contract
         public ValidationCheck Validate()
         {
             var vc = new ValidationCheck()
-            .Assert(ValidationCheck.BasicStringCheck(this.lobbyID, "lobbyID"))
+            .Assert(ValidationCheck.BasicStringCheck(this.lobbyId, "lobbyID"))
             .Assert(host == null, "no host")
             .Assert(host.Validate)
             .Assert(metaData == null ? true : metaData.Count < maxMetaDataCount, "too many items in metadata ("+metaData.Count+"/"+maxMetaDataCount+")")
