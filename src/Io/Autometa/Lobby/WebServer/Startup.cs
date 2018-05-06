@@ -83,12 +83,6 @@ namespace Io.Autometa.Lobby.WebServer
             // Expose swagger middleware for development
             app.UseSwagger();
 
-            app.UseSwaggerUI(c =>
-            {
-                //https://lobby.autometa.io/swagger/v1/swagger.json
-                c.SwaggerEndpoint("/swagger/"+ApiVersion+"/swagger.json", ApiTitle);
-            });
-
             // Should be near the end
             app.UseServerTiming();
         }

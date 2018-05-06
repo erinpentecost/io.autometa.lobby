@@ -175,6 +175,12 @@ return setres";
 
         public GameLobby Leave(string gameType, string lobbyId, string kickIp, string hostIp)
         {
+            // if kickip is null, assume it is the caller
+            if (string.IsNullOrWhiteSpace(kickIp))
+            {
+                kickIp = hostIp;
+            }
+
             new ValidationCheck()
                 .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
                 .Assert(ValidationCheck.BasicStringCheck(lobbyId, nameof(lobbyId)))
