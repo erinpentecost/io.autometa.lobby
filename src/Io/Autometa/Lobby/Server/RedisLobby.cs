@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using Io.Autometa.Lobby.Contract;
+using Io.Autometa.Lobby.Server.Contract;
 using Io.Autometa.Redis;
 using Newtonsoft.Json;
 
 namespace Io.Autometa.Lobby.Server
 {
-    public class RedisLobby : ILobby
+    public class RedisLobby
     {
         private static string ExpirationTimeSec = 300.ToString();
         private static int maxLobbySize = 30;
@@ -18,268 +18,339 @@ namespace Io.Autometa.Lobby.Server
         // the batch result from Redis is.
         private static int maxSearchReturnSize = 100;
 
+        private const string redisCategory = "redis";
+
+        private Func<string, long, bool> publishTimingStats;
+
         private RedisOptions opt { get; set; }
 
-        private string userIp { get; }
+        public const char SecretPrefix = 'S';
 
         // Ensure that only one instance of keys[2] exists, based on keys[1]
         // Note that SETEX may be deprecated at some point
+        // This is a "bad" redis script because one of the keys that is operated
+        // on is not called out as a KEYS argument.
         private static string EnsureSingleLua =
-@"redis.call(""DEL"",redis.call(""GET"",KEYS[1]))
-redis.call(""SETEX"",KEYS[1]," + ExpirationTimeSec + @",KEYS[2])";
+@"
+print(KEYS[2] .. ' -> ' .. KEYS[1] .. '...')
+local existingkey = redis.pcall(""GET"",KEYS[1])
+redis.pcall('DEL',existingkey)
+local setres = redis.call(""SETEX"",KEYS[1],""" + ExpirationTimeSec + @""",KEYS[2])
+print('... done')
+return setres";
 
-        public RedisLobby(string connectionAddress, string userIp)
+        // The lobbyID is very much a magic string, and care
+        // should be taken if you mess with it.
+        // Redis search methods depend on it being a certain
+        // format: "gameType-[$]shortId"
+        private string CreateKey(string gameType, string lobbyID)
+        {
+            return (gameType + "-" + lobbyID).ToUpperInvariant();
+        }
+
+        public RedisLobby(string connectionAddress, Func<string, long, bool> publishTimingStats=null)
         {
             if (string.IsNullOrEmpty(connectionAddress))
             {
                 throw new ArgumentNullException(nameof(connectionAddress));
             }
-            if (string.IsNullOrWhiteSpace(userIp))
-            {
-                throw new ArgumentNullException(nameof(userIp));
-            }
 
-            var splitUp = connectionAddress.Split(':', 2);
+            var splitUp = connectionAddress.Split(new char[]{':'}, 2, StringSplitOptions.RemoveEmptyEntries);
             this.opt = new RedisOptions();
             this.opt.Host = splitUp[0];
             this.opt.Port = int.Parse(splitUp[1]);
-            this.userIp = userIp;
+
+            this.publishTimingStats = publishTimingStats ?? new Func<string, long, bool>((n,d) => (true));
         }
 
 
-        ServerResponse<GameLobby> ILobby.Create(CreateGameLobbyRequest newLobby)
+        public GameLobby Create(string gameType, string ip, int port, string name, bool hidden, Dictionary<string,string> meta)
         {
-            var vc = newLobby.Validate();
-            if (!vc.result)
-            {
-                return new ServerResponse<GameLobby>(null, vc);
-            }
+            new ValidationCheck()
+                .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
+                .Assert(ValidationCheck.BasicStringCheck(ip, nameof(ip)))
+                .Assert(ValidationCheck.BasicStringCheck(name, nameof(name)))
+                .Assert(port > 1024, nameof(port) + " is privileged")
+                .Throw();
+
+            gameType = gameType.ToUpperInvariant().Trim();
+            ip = ip.ToUpperInvariant().Trim();
 
             using (var r = new RedisClient(this.opt))
             {
                 GameLobby gl = new GameLobby();
                 gl.clients = new List<Client>();
                 gl.creationTime = DateTime.UtcNow;
-                gl.host = newLobby.owner;
-                gl.host.ip = this.userIp; // override user-supplied ip
-                gl.gameType = newLobby.gameType;
-                gl.hidden = newLobby.hidden;
+                gl.host = new Client();
+                gl.host.port = port;
+                gl.host.name = name;
+                gl.host.ip = ip;
+                gl.gameType = gameType;
+                gl.hidden = hidden;
                 // The lobbyID is very much a magic string, and care
                 // should be taken if you mess with it.
                 // Redis search methods depend on it being a certain
-                // format: "gameType-[$]shortId"
-                gl.lobbyID = newLobby.gameType.GenerateID()
-                    + (gl.hidden ? "$" : string.Empty);
-                
-                gl.metaData = newLobby.metaData;
+                // format: "gameType-[s]shortId"
+                gl.lobbyID = IdGenerator.GetId(hidden);
+
+                gl.metaData = meta ?? new Dictionary<string, string>();
+
+                string lobbyKey = CreateKey(gl.gameType, gl.lobbyID);
 
                 var pipe = new RedisPipeline()
                     // only allow one game to be hosted per IP address
-                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host:" + gl.host.ip, gl.lobbyID)
+                    .Send(RedisCommand.EVAL, EnsureSingleLua, "2", "host-" + gl.host.ip, lobbyKey)
                     // actually create the lobby
-                    .Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "EX", ExpirationTimeSec);
+                    .Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "NX", "EX", ExpirationTimeSec);
 
-                r.Send(pipe);
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var resp = r.Send(pipe);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
-                if (!vc.result)
+                if (resp[1] == null)
                 {
-                    return new ServerResponse<GameLobby>(null, vc);
+                    throw new LobbyException(500, "lobby already exists");
                 }
 
-                return new ServerResponse<GameLobby>(gl, null);
+                return gl;
             }
         }
 
-        ServerResponse<GameLobby> ILobby.Join(LobbyRequest request)
+        public GameLobby Join(string gameType, string lobbyId, string ip, int port, string name)
         {
-            Client client = request.client;
-            client.ip = this.userIp; // override user-supplied ip
+            new ValidationCheck()
+                .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
+                .Assert(ValidationCheck.BasicStringCheck(lobbyId, nameof(lobbyId)))
+                .Assert(ValidationCheck.BasicStringCheck(name, nameof(name)))
+                .Assert(ValidationCheck.BasicStringCheck(ip, nameof(ip)))
+                .Assert(port > 1024, nameof(port) + " is privileged")
+                .Throw();
+            
+            gameType = gameType.ToUpperInvariant();
+            lobbyId = lobbyId.ToUpperInvariant();
 
-            var vc = request.Validate();
-            if (!vc.result)
-            {
-                return new ServerResponse<GameLobby>(null, vc);
-            }
+            Client client = new Client();
+            client.port = port;
+            client.name = name;
+            client.ip = ip;
+
+            string lobbyKey = CreateKey(gameType, lobbyId);
 
             using (var r = new RedisClient(this.opt))
             {
-                var foundGame = r.Send(RedisCommand.GET, request.lobbyId);
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var foundGame = r.Send(RedisCommand.GET, lobbyKey);
+                sw.Stop();
+
                 if (foundGame == null)
                 {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        new ValidationCheck(false, "lobby '" + request.lobbyId + "' does not exist.")
-                    );
+                    throw new LobbyException(404, "lobby does not exist");
                 }
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
-                var blc = new ValidationCheck()
+                new ValidationCheck()
                     .Assert(gl.host.uid != client.uid, "host can't join her own game")
                     .Assert(gl.clients.All(c => c.uid != client.uid), "already joined")
-                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed")
-                    .Assert(gl.clients.Count <= maxLobbySize, "lobby is full (" + maxLobbySize + ")");
-                if (!blc.result)
-                {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        blc);
-                }
+                    .Assert(gl.gameType == gameType, "lobby id changed")
+                    .Assert(gl.lobbyID == lobbyId, "lobby id changed")
+                    .Assert(gl.clients.Count <= maxLobbySize, "lobby is full (" + maxLobbySize + ")")
+                    .Throw();
 
                 gl.clients.Add(client);
 
-                r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                sw.Start();
+                var resp = r.Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
-                return new ServerResponse<GameLobby>(gl, null);
+                if (resp == null)
+                {
+                    throw new LobbyException(404, "lobby no longer exists");
+                }
+
+                return gl;
             }
         }
 
-        public ServerResponse<GameLobby> Leave(LobbyRequest request)
+        public GameLobby Leave(string gameType, string lobbyId, string kickIp, string hostIp)
         {
-            // unlike other methods, the Host can force a different user to Leave
-            Client client = request.client;
+            new ValidationCheck()
+                .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
+                .Assert(ValidationCheck.BasicStringCheck(lobbyId, nameof(lobbyId)))
+                .Assert(ValidationCheck.BasicStringCheck(kickIp, nameof(kickIp)))
+                .Assert(ValidationCheck.BasicStringCheck(hostIp, nameof(hostIp)))
+                .Throw();
+            
+            gameType = gameType.ToUpperInvariant();
+            lobbyId = lobbyId.ToUpperInvariant();
 
-            var vc = request.Validate();
-            if (!vc.result)
-            {
-                return new ServerResponse<GameLobby>(null, vc);
-            }
+            // unlike other methods, the Host can force a different user to Leave
+            string lobbyKey = CreateKey(gameType, lobbyId);
 
             using (var r = new RedisClient(this.opt))
             {
-                var foundGame = r.Send(RedisCommand.GET, request.lobbyId);
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                var foundGame = r.Send(RedisCommand.GET, lobbyKey);
+                sw.Stop();
+
                 if (foundGame == null)
                 {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        new ValidationCheck(false, "lobby '" + request.lobbyId + "' does not exist.")
-                    );
+                    throw new LobbyException(404, "lobby does not exist");
                 }
                 string lobbyStr = Encoding.UTF8.GetString(foundGame);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
-                var blc = new ValidationCheck()
-                    .Assert(gl.lobbyID == request.lobbyId, "lobby id changed");
-                if (!blc.result)
-                {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        blc);
-                }
+                new ValidationCheck()
+                    .Assert(gl.lobbyID == lobbyId, "lobby id changed")
+                    .Assert(gl.gameType == gameType, "gametype changed")
+                    .Throw();
 
                 // Caller is the host and is leaving their own game
-                if ((gl.host.ip == this.userIp) && (client.ip == this.userIp))
+                if ((gl.host.ip == hostIp) && (kickIp == hostIp))
                 {
-                    r.Send(RedisCommand.DEL, gl.lobbyID);
+                    sw.Start();
+                    r.Send(RedisCommand.DEL, lobbyKey);
+                    sw.Stop();
                 }
-                // Host is kicking someone or someone volunteered to leave
-                else if ((gl.host.ip == this.userIp) || (client.ip == this.userIp))
-                {
-                    gl.clients.RemoveAll(c => c.ip == client.ip);
 
-                    r.Send(RedisCommand.SET, gl.lobbyID, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                // Host is kicking someone or someone volunteered to leave
+                else if ((gl.host.ip == hostIp) || (kickIp == hostIp))
+                {
+                    gl.clients.RemoveAll(c => c.ip == kickIp);
+
+                    sw.Start();
+                    var resp = r.Send(RedisCommand.SET, lobbyKey, JsonConvert.SerializeObject(gl), "XX", "EX", ExpirationTimeSec);
+                    sw.Stop();
+
+                    if (resp == null)
+                    {
+                        throw new LobbyException(404, "lobby no longer exists");
+                    }
                 }
                 else
                 {
-                    var vlc = new ValidationCheck(false, "permission denied");
-                    return new ServerResponse<GameLobby>(null, vlc);
+                    throw new LobbyException(403, "only the host can kick other users");
                 }
 
-                return new ServerResponse<GameLobby>(gl, null);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
+
+                return gl;
             }
         }
-        ServerResponse<SearchResponse> ILobby.Search(Game game)
-        {
-            // ms
-            long maxTime = 3000;
-            Stopwatch runTime = new Stopwatch();
-            runTime.Start();
-            var vc = game.Validate();
 
-            if (!vc.result)
+        /// <summary>
+        /// get a list of lobbies for a gametype.
+        /// hidden games will not be returned
+        /// </summary>
+        /// <param name="gameType">gametype to search</param>
+        /// <param name="metaKey">optional metadata key filter. the key must exist</param>
+        /// <param name="metaValue">optional metadata value filter. the value must match for the given key.</param>
+        /// <returns></returns>
+        public List<GameLobby> Search(string gameType, string metaKey=null, string metaValue=null)
+        {
+            new ValidationCheck()
+                .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
+                .Throw();
+
+            gameType = gameType.ToUpperInvariant();
+
+            Func<Dictionary<string, string>, bool> matches = (d) => true;
+            if (!string.IsNullOrWhiteSpace(metaKey))
             {
-                return new ServerResponse<SearchResponse>(null, vc);
+                if (!string.IsNullOrWhiteSpace(metaValue))
+                {
+                    matches = (d) => d != null && d.ContainsKey(metaKey) && string.Equals(d[metaKey], metaValue);
+                }
+                else
+                {
+                    matches = (d) => d != null && d.ContainsKey(metaKey);
+                }
             }
 
-            SearchResponse sr = new SearchResponse();
-            sr.lobbies = new List<GameLobby>();
+            var foundGames = new List<GameLobby>();
             RedisPipeline pipe = new RedisPipeline();
             using (var r = new RedisClient(this.opt))
             {
                 // get keys
-                foreach (var searchRes in r.Scan(RedisCommand.SCAN, game.gid + "-*[^$]"))
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
+                foreach (var searchRes in r.Scan(RedisCommand.SCAN, gameType + "-[^" + SecretPrefix.ToString() + "]*"))
                 {
                     foreach (var key in searchRes)
                     {
                         // build up messages to get more data
-                        pipe
-                            .Send(RedisCommand.GET, key);
+                        pipe.Send(RedisCommand.GET, key);
 
-                        if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
+                        if (pipe.Length >= maxSearchReturnSize*10)
                         {
                             break;
                         }
                     }
-                    if ((pipe.Length >= maxSearchReturnSize) || runTime.ElapsedMilliseconds > maxTime/2)
+                    if (pipe.Length >= maxSearchReturnSize*10)
                     {
                         break;
                     }
                 }
-
+                
                 // get lobby data
-                foreach (var lobby in r.Send(pipe))
+                var readDetails = r.Send(pipe);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
+
+                foreach (var lobby in readDetails)
                 {
                     string lobbyStr = Encoding.UTF8.GetString(lobby);
                     GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
 
-                    sr.lobbies.Add(gl);
+                    if (matches(gl.metaData) && (gl.gameType == gameType))
+                    {
+                        foundGames.Add(gl);
+                    }
 
-                    if (runTime.ElapsedMilliseconds > maxTime)
+                    if (foundGames.Count >= maxSearchReturnSize)
                     {
                         break;
                     }
                 }
             }
 
-            return new ServerResponse<SearchResponse>(
-                sr,
-                new ValidationCheck(true, "completed in " + runTime.Elapsed.TotalSeconds + " seconds"));
+            if (foundGames.Count == 0)
+            {
+                throw new LobbyException(404, "no games match search parameters");
+            }
+
+            return foundGames;
         }
 
-        ServerResponse<GameLobby> ILobby.Read(ReadRequest request)
+        public GameLobby Read(string gameType, string lobbyId)
         {
-            var vc = request.Validate();
-            if (!vc.result)
-            {
-                return new ServerResponse<GameLobby>(null, vc);
-            }
+            new ValidationCheck()
+                .Assert(ValidationCheck.BasicStringCheck(gameType, nameof(gameType)))
+                .Assert(ValidationCheck.BasicStringCheck(lobbyId, nameof(lobbyId)))
+                .Throw();
+
+            string lobbyKey = CreateKey(gameType, lobbyId);
 
             using (var r = new RedisClient(this.opt))
             {
                 var p = new RedisPipeline()
-                    .Send(RedisCommand.GET, request.lobbyId)
-                    .Send(RedisCommand.EXPIRE, request.lobbyId);
+                    .Send(RedisCommand.GET, lobbyKey)
+                    .Send(RedisCommand.EXPIRE, lobbyKey);
 
+                Stopwatch sw = new Stopwatch();
+                sw.Start();
                 var foundGame = r.Send(p);
+                this.publishTimingStats(redisCategory, sw.ElapsedMilliseconds);
 
                 if (foundGame[0] == null)
                 {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        new ValidationCheck(false, "lobby '" + request.lobbyId + "' does not exist.")
-                    );
+                    throw new LobbyException(404, "lobby does not exist");
                 }
 
                 string lobbyStr = Encoding.UTF8.GetString(foundGame[0]);
                 GameLobby gl = JsonConvert.DeserializeObject<GameLobby>(lobbyStr);
-                var blc = new ValidationCheck()
-                    .Assert(gl.gameType.gid == request.game.gid, "game api is mismatched");
-                if (!blc.result)
-                {
-                    return new ServerResponse<GameLobby>(
-                        null,
-                        blc);
-                }
 
-                return new ServerResponse<GameLobby>(gl, null);
+                return gl;
             }
         }
     }

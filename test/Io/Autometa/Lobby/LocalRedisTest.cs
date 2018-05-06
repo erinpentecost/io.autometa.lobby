@@ -6,33 +6,105 @@ using System.Threading.Tasks;
 using Xunit;
 
 using Io.Autometa.Lobby;
-using Io.Autometa.Lobby.Contract;
 using Newtonsoft.Json;
 using System.IO;
-using Io.Autometa.Schema;
 using Io.Autometa.Lobby.Server;
+using Io.Autometa.Redis;
 
 namespace Io.Autometa.Lobby.Tests
 {
     public class LocalRedisTest
     {
-        ILobby r;
-
-        Game testGame;
+        RedisLobby r;
+        Random rand = new Random();
 
         public LocalRedisTest()
         {
-            Random r = new Random();
-            this.r = new RedisLobby("localhost:6379", "localhost");
-            this.testGame = new Game();
-            this.testGame.api = r.Next(0,100);
-            this.testGame.id = nameof(LocalRedisTest);
+            
+            this.r = new RedisLobby("localhost:6379");
         }
 
-        private static string exeDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-        private static void DumpExample<T>(T example)
+        [Fact]
+        public void SetTest()
         {
-            File.WriteAllText(Path.Combine(exeDir, typeof(T).GetFriendlyName() +".sample.json"), JsonConvert.SerializeObject(example));
+            RedisOptions opt = new RedisOptions("localhost", 6379);
+            using (var r = new RedisClient(opt))
+            {
+                var pipe1 = new RedisPipeline()
+                    // only allow one game to be hosted per IP address
+                    .Send(RedisCommand.GET, "derp")
+                    // actually create the lobby
+                    .Send(RedisCommand.SET, "derp", "hi", "NX", "EX", "900");
+
+                var resp1 = r.Send(pipe1);
+                Assert.NotEqual(null, resp1[1]);
+
+
+                var pipe2 = new RedisPipeline()
+                    // only allow one game to be hosted per IP address
+                    .Send(RedisCommand.GET, "derp")
+                    // actually create the lobby
+                    .Send(RedisCommand.SET, "derp", "bye ", "NX", "EX", "900");
+
+                var resp2 = r.Send(pipe2);
+                Assert.Equal(null, resp2[1]);
+
+                r.Send(RedisCommand.DEL, "derp");
+            }
+        }
+
+        [Fact]
+        public void HostTwoTest()
+        {
+            var gameType = nameof(HostTwoTest) + rand.Next(0,100);
+
+            // Create test lobby
+            var createResp1 = this.r.Create(gameType, "localhost", 6969, "host1", false, null);
+
+            // Find the lobby
+            var searchResp1 = this.r.Search(gameType);
+            Assert.Equal(1, searchResp1.Count);
+            Assert.Equal(createResp1.lobbyID, searchResp1[0].lobbyID);
+
+            // Create another one
+            var createResp2 = this.r.Create(gameType, "localhost", 9696, "host2", false, null);
+
+            // Find the lobby
+            var searchResp2 = this.r.Search(gameType);
+            Assert.Equal(1, searchResp2.Count);
+            Assert.Equal(createResp2.lobbyID, searchResp2[0].lobbyID);
+        }
+
+        [Fact]
+        public void SearchTest()
+        {
+            var gameType = nameof(SearchTest) + rand.Next(0,100);
+            Dictionary<string,string> metaData = new Dictionary<string, string>();
+            metaData.Add("duh", "buh");
+            metaData.Add("huh", "guh");
+
+            // Create test lobby
+            var createResp1 = this.r.Create(gameType, "localhost1", 6969, "host1", false, metaData);
+            var createResp2 = this.r.Create(gameType, "localhost2", 6969, "host1", true, metaData);
+            metaData["huh"] = "hahaha";
+            var createResp3 = this.r.Create(gameType, "localhost3", 6969, "host1", false, metaData);
+            var createResp4 = this.r.Create(gameType, "localhost4", 6969, "host1", false, null);
+
+            // Find the lobby
+            var searchResp1 = this.r.Search(gameType, "huh");
+            Assert.Equal(2, searchResp1.Count);
+
+            var searchResp2 = this.r.Search(gameType, "huh", "guh");
+            Assert.Equal(1, searchResp2.Count);
+            Assert.Equal(createResp1.lobbyID, searchResp2[0].lobbyID);
+
+            var searchResp3 = this.r.Search(gameType);
+            Assert.Equal(3, searchResp3.Count);
+
+
+            var searchResp4 = this.r.Search(gameType, "huh", "hahaha");
+            Assert.Equal(1, searchResp4.Count);
+            Assert.Equal(createResp3.lobbyID, searchResp4[0].lobbyID);
         }
 
         /// Does happy-path check versus a real redis instance
@@ -40,75 +112,60 @@ namespace Io.Autometa.Lobby.Tests
         [Fact]
         public void IntegrationTest()
         {
-            Client gcHost = new Client();
-            gcHost.nickName = nameof(gcHost.nickName);
-            gcHost.ip = "localhost";
-            gcHost.port = 6969;
-            DumpExample(gcHost);
+            var gameType = nameof(IntegrationTest) + rand.Next(0,100);
 
-            CreateGameLobbyRequest cgl = new CreateGameLobbyRequest();
-            cgl.owner = gcHost;
-            cgl.gameType = this.testGame;
-            cgl.hidden = false;
-            DumpExample(cgl);
-
-            // Creat a new lobby
-            var createResp = this.r.Create(cgl);
-            AssertExt.Valid(createResp);
-            DumpExample(createResp);
+            // Create test lobby
+            var createResp = this.r.Create(gameType, "localhost", 6969, "host", false, null);
 
             // Find the lobby
-            var searchResp1 = this.r.Search(this.testGame);
-            AssertExt.Valid(searchResp1);
-            Assert.True(searchResp1.response.lobbies.Count > 0);
-            Assert.True(searchResp1.response.lobbies
-                .Any(lobby => lobby.lobbyID == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
-            DumpExample(searchResp1);
+            var searchResp1 = this.r.Search(gameType);
+            Assert.True(searchResp1.Count > 0);
+            Assert.True(searchResp1
+                .Any(lobby => lobby.lobbyID == createResp.lobbyID), "can't find lobby with id "+createResp.lobbyID);
 
             // Re-read the lobby
-            var readResp1 = this.r.Read(new ReadRequest(createResp.response.lobbyID, cgl.gameType));
-            AssertExt.Valid(readResp1);
+            var readResp1 = this.r.Read(gameType, createResp.lobbyID);
             Assert.Equal(
-                JsonConvert.SerializeObject(createResp.response),
-                JsonConvert.SerializeObject(readResp1.response));
-            DumpExample(readResp1);
-
-            // Find the lobby as a different user.
-
-            var searchResp2 = this.r.Search(this.testGame);
-            AssertExt.Valid(searchResp2);
-            Assert.True(searchResp2.response.lobbies.Count > 0);
-            Assert.True(searchResp2.response.lobbies
-                .Any(lobby => lobby.lobbyID == createResp.response.lobbyID), "can't find lobby with id "+createResp.response.lobbyID);
-            
-            // Re-read the lobby as a different user
-            var readResp2 = this.r.Read(new ReadRequest(createResp.response.lobbyID, this.testGame));
-            AssertExt.Valid(readResp2);
-            Assert.Equal(
-                JsonConvert.SerializeObject(createResp.response),
-                JsonConvert.SerializeObject(readResp2.response));
+                JsonConvert.SerializeObject(createResp),
+                JsonConvert.SerializeObject(readResp1));
             
             // Join the lobby!
-            Client gcUser = new Client();
-            gcHost.nickName = "some client";
-            gcUser.ip = "127.0.0.1";
-            gcUser.port = 9000;
-            var joinReq = new LobbyRequest(createResp.response.lobbyID, gcUser);
-            DumpExample(joinReq);
-            var joinResp = this.r.Join(joinReq);
-            AssertExt.Valid(joinResp);
-            DumpExample(joinResp);
+            var jClient = new Server.Contract.Client();
+            jClient.ip = "127.0.0.1";
+            jClient.port = 9000;
+            jClient.name = "name";
+            var joinResp = this.r.Join(gameType, createResp.lobbyID, jClient.ip, jClient.port, jClient.name);
 
             // Read it again and verify we are in now
-            var readResp3 = this.r.Read(new ReadRequest(createResp.response.lobbyID, this.testGame));
-            AssertExt.Valid(readResp2);
+            var readResp2 = this.r.Read(gameType, createResp.lobbyID);
             Assert.NotEqual(
-                JsonConvert.SerializeObject(createResp.response),
-                JsonConvert.SerializeObject(readResp3.response));
-            Assert.True(readResp3.response.clients.Count == 1);
+                JsonConvert.SerializeObject(createResp),
+                JsonConvert.SerializeObject(readResp2));
+            Assert.True(readResp2.clients.Count == 1);
             Assert.Equal(
-                JsonConvert.SerializeObject(readResp3.response.clients[0]),
-                JsonConvert.SerializeObject(gcUser));
+                JsonConvert.SerializeObject(jClient),
+                JsonConvert.SerializeObject(readResp2.clients[0]));
+
+            // Leave the lobby
+            var leaveResp = this.r.Leave(gameType, createResp.lobbyID, jClient.ip, jClient.ip);
+            Assert.True(leaveResp.clients.Count == 0);
+
+            // Host leaves the lobby
+            var closeLobbyResp = this.r.Leave(gameType, createResp.lobbyID, createResp.host.ip, createResp.host.ip);
+
+            // Re-read the lobby
+            bool deleted = false;
+            try
+            {
+                this.r.Read(gameType, createResp.lobbyID);
+            }
+            catch
+            {
+                // yay
+                deleted = true;
+            }
+            Assert.True(deleted);
+
         }
     }
 }
