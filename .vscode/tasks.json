@@ -30,7 +30,7 @@
         },
         {
             "label": "build test",
-            "command": "dotnet build ./test/Io/Autometa/Lobby/Server",
+            "command": "dotnet build ./test/Io/Autometa/Lobby",
             "type": "shell",
             "group": "build",
             "presentation": {

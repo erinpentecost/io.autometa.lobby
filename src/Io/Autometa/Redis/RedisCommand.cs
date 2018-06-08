@@ -1,6 +1,6 @@
 namespace Io.Autometa.Redis
 {
-    // Copied from stack exchange redis
+    // Copied from stack exchange redis.
     public enum RedisCommand
     {
         APPEND,

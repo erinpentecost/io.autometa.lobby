@@ -25,8 +25,15 @@ namespace Io.Autometa.Lobby.WebServer.Controllers
         public LobbyController(IHttpContextAccessor httpContextAccessor)
         {
             contextAccessor = httpContextAccessor;
+
+            var redisPath = Environment.GetEnvironmentVariable("ElasticacheConnectionString");
+            if (string.IsNullOrWhiteSpace(redisPath))
+            {
+                redisPath = "localhost:6379";
+            }
+
             lobby = new RedisLobby(
-                    Environment.GetEnvironmentVariable("ElasticacheConnectionString"),
+                    redisPath,
                     PublishTiming);
         }
 

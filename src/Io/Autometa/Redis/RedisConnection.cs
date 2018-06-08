@@ -4,6 +4,9 @@ using System.Net.Sockets;
 
 namespace Io.Autometa.Redis
 {
+    /// <summary>
+    /// This class holds the actual network connection to Redis.
+    /// </summary>
     internal class RedisConnection : IDisposable
     {
         private RedisOptions opt {get;}

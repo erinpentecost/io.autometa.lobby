@@ -13,7 +13,7 @@ namespace Io.Autometa.Redis
     /// </summary>
     public class RedisClient : IDisposable, IRedisCommandReceiver
     {
-        internal RedisConnection con {get;}
+        internal RedisConnection con { get; }
         private ILogger log;
 
         internal const string endLineString = "\r\n";
@@ -40,9 +40,11 @@ namespace Io.Autometa.Redis
             return new[] { firstLine, secondLine }.Concat(thirdLine).SelectMany(xs => xs).ToArray();
         }
 
-        /// basically copied from https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs
+        /// <summary>
+        /// Borrowed heavily from https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs
         /// https://redis.io/topics/protocol
-        /// Can return string, resperror, int, bulk string, array
+        /// </summary>
+        /// <returns>string, resperror, int, bulk string, array</returns>
         internal dynamic FetchResponse()
         {
             var type = (RespType)con.stream.ReadByte();
@@ -123,7 +125,7 @@ namespace Io.Autometa.Redis
 
             return Send(command, arguments.Select(a => Encoding.UTF8.GetBytes(a)).ToArray());
         }
-        
+
         public dynamic Send(RedisCommand command, params byte[][] arguments) => Send(command.ToString(), arguments);
         public dynamic Send(string command, byte[][] arguments)
         {
@@ -138,6 +140,11 @@ namespace Io.Autometa.Redis
             return FetchResponse();
         }
 
+        /// <summary>
+        /// Send pipelined commands to Redis.
+        /// </summary>
+        /// <param name="command">Pipeline object.</param>
+        /// <returns>a parallel array of responses to the commands in the pipeline</returns>
         public dynamic[] Send(RedisPipeline command)
         {
             var encoded = command.commands.SelectMany(x => x).ToArray();
@@ -160,16 +167,22 @@ namespace Io.Autometa.Redis
 
         /// <summary>
         /// You will probably want to flatten this output.
-        /// It's just situated like this so the enum can be quit without breaking everything else.
+        /// It's just situated like this so the enumerable can be quit without breaking everything else.
+        /// https://redis.io/commands/scan
         /// </summary>
         /// <param name="cmd">SCAN-type command to use</param>
         /// <param name="match">pattern to match</param>
         /// <returns></returns>
         public IEnumerable<List<string>> Scan(RedisCommand cmd = RedisCommand.SCAN, string match = null)
         {
+            // this class is not thread safe; the socket is re-used for all commands.
+            // this introduces issues when sateful connections must be made, and
+            // scan is one of those calls.
+            // to account for this, I return elements in batches in the same exact
+            // batch sizes that Redis returns them.
             long cursor = 0;
             dynamic[] resp;
-            do 
+            do
             {
                 if (match != null)
                 {
@@ -179,10 +192,16 @@ namespace Io.Autometa.Redis
                 {
                     resp = this.Send(cmd, cursor.ToString());
                 }
+
+                // the first element in resp is the number of elements we've read
+                // so far. 0 is a magic value that indicates that no further
+                // calls to scan will return additional elements.
                 cursor = Redis.Convert.ParseInt64(resp[0]);
-                
+
+                // the second element in resp is a two-dimensional byte array,
+                // which holds 0 or more elements from our scan.
                 List<string> searchRes = new List<string>();
-                foreach(byte[] b in resp[1])
+                foreach (byte[] b in resp[1])
                 {
                     searchRes.Add(Encoding.UTF8.GetString(b));
                 }
