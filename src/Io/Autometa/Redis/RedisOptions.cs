@@ -5,6 +5,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Io.Autometa.Redis
 {
+    /// <summary>
+    /// Connection options to use when creating a new connection to Redis.
+    /// Unlike the stackexchange implementation, initialization is very lightweight.
+    /// </summary>
     public class RedisOptions
     {
         private string _host;

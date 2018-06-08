@@ -5,6 +5,9 @@ using System.Text;
 
 namespace Io.Autometa.Redis
 {
+    /// <summary>
+    /// Utility methods to treat a stream as if it was a UTF8 string stream.
+    /// </summary>
     internal static class StreamExtensions
     {
         private static byte[] endLine = Encoding.UTF8.GetBytes("\r\n");

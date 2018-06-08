@@ -5,6 +5,11 @@ using System.Text;
 
 namespace Io.Autometa.Redis
 {
+    /// <summary>
+    /// You can store commands into a pipeline and then execute them all
+    /// as an atomic operation on Redis.
+    /// https://redis.io/topics/pipelining
+    /// </summary>
     public class RedisPipeline : IRedisCommandReceiver
     {
         internal readonly List<byte[]> commands = new List<byte[]>();
