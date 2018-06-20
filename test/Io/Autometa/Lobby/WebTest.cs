@@ -5,6 +5,8 @@ using Io.Autometa.Lobby.WebServer.Controllers;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using Io.Autometa.Lobby.Server.Contract;
+using System.Net.Http.Headers;
+using System.Text;
 
 namespace Io.Autometa.Lobby.Tests
 {
@@ -16,7 +18,9 @@ namespace Io.Autometa.Lobby.Tests
 
         public WebTest()
         {
-            
+            client.DefaultRequestHeaders
+                .Accept
+                .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
         }
 
         [Fact]
@@ -34,14 +38,20 @@ namespace Io.Autometa.Lobby.Tests
 
             var path = web + "api/" + gameType;
             string body = JsonConvert.SerializeObject(gameOptions);
-            HttpResponseMessage response = await client.PostAsync(path, new StringContent(body));
+            HttpResponseMessage response =
+                await client.PostAsync(path,
+                new StringContent(body,
+                    Encoding.UTF8,
+                    "application/json"));
 
             Assert.True(response.IsSuccessStatusCode);
 
-            var lobbyState = JsonConvert.DeserializeObject<GameLobby>(response.Content.ToString());
+            var contentString = await response.Content.ReadAsStringAsync();
+
+            var lobbyState = JsonConvert.DeserializeObject<GameLobby>(contentString);
 
             Assert.Equal(gameOptions.hidden, lobbyState.hidden);
-            Assert.Equal(gameOptions.name, lobbyState.host.name);
+            Assert.Equal(gameOptions.name.Replace(" ", "%20"), lobbyState.host.name);
             Assert.Equal(gameOptions.port, lobbyState.host.port);
             Assert.Equal(gameOptions.meta["ok"], lobbyState.metaData["ok"]);
         }
