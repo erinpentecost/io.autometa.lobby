@@ -46,10 +46,12 @@ namespace Io.Autometa.Lobby.Tests
 
             Assert.True(response.IsSuccessStatusCode);
 
-            var lobbyState = JsonConvert.DeserializeObject<GameLobby>(response.Content.ToString());
+            var contentString = await response.Content.ReadAsStringAsync();
+
+            var lobbyState = JsonConvert.DeserializeObject<GameLobby>(contentString);
 
             Assert.Equal(gameOptions.hidden, lobbyState.hidden);
-            Assert.Equal(gameOptions.name, lobbyState.host.name);
+            Assert.Equal(gameOptions.name.Replace(" ", "%20"), lobbyState.host.name);
             Assert.Equal(gameOptions.port, lobbyState.host.port);
             Assert.Equal(gameOptions.meta["ok"], lobbyState.metaData["ok"]);
         }
