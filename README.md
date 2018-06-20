@@ -13,4 +13,4 @@ Swagger exposes the API; rely on it instead of documentation which may be out of
 
 ## Configuration for Local Execution
 
-See the [integration test] (./.vscode/runTest.sh) for an example.
+See the [integration test](./.vscode/runTest.sh) for an example.
