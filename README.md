@@ -63,3 +63,8 @@ TODO: Make this all automatic on publish.
 ## Configuration for Local Execution
 
 See the [integration test](./.vscode/runTest.sh) for an example.
+
+## Attribution
+
+1. [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis)
+2. [https://github.com/neuecc/RespClient](https://github.com/neuecc/RespClient/blob/master/RespClient/Cmdlet/Cmdlets.cs)
