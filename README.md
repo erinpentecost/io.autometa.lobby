@@ -4,7 +4,7 @@ Lightweight RESTful lobby service that supports different games simultaneously b
 
 ## API
 
-Swagger exposes the API; rely on it instead of documentation which may be out of date.
+Swagger exposes the API; rely on it instead of documentation which may be out of date. You can also check out the [API controller](./src/Io/Autometa/Lobby/WebServer/Controllers/LobbyController.cs).
 
 ### Create
 
