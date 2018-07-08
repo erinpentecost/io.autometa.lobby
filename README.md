@@ -1,6 +1,6 @@
 # Io.Autometa.Lobby
 
-Lightweight RESTful lobby service that supports different games simultaneously by abusing Redis. It functions similarly to the [JackBox game lobby](https://jackbox.tv/).
+Lightweight RESTful lobby service that supports different games simultaneously backed by Redis. It functions similarly to the [JackBox game lobby](https://jackbox.tv/), but has additional (optional) features. You'd use this service to allow game clients to locate game servers hosted by peers.
 
 ## API
 
@@ -14,7 +14,11 @@ Create a lobby for the "gitgame" game:
 curl -H "Content-Type: application/json" -X POST -d '{"port":6969,"name":"host nickname","hidden":false,"meta":{}}' https://lobby.autometa.io/api/gitgame
 ```
 
-This can be extended with metadata.
+This can be extended with metadata:
+
+```bash
+curl -H "Content-Type: application/json" -X POST -d '{"port":6969,"name":"host nickname","hidden":false,"meta":{"metakey1":"metavalue1","metakey2":"metavalue2"}}' https://lobby.autometa.io/api/gitgame
+```
 
 ### Search
 
